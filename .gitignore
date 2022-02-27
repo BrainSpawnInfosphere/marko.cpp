@@ -1,0 +1,8 @@
+build
+*.pyc
+.DS_Store
+._*
+archive
+poetry.lock
+dist
+.pytest_cache
