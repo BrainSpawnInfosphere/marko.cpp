@@ -22,9 +22,9 @@
 constexpr int MAX_LEN = 256;
 
 typedef int SOCKET;
-// inline constexpr int INVALID_SOCKET = -1;
-// inline constexpr int SOCKET_ERROR = -1;
-// inline constexpr int NO_ERROR = 0;
+// constexpr int INVALID_SOCKET = -1;
+// constexpr int SOCKET_ERROR = -1;
+// constexpr int NO_ERROR = 0;
 typedef struct sockaddr_in sockaddr_t;
 
 
