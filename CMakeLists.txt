@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10.0)
-project(marko VERSION 0.5.0 LANGUAGES CXX)
+project(marko VERSION 0.6.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -34,9 +34,10 @@ message(STATUS "-------------------------------------")
 # use of this here :)
 add_library(${PROJECT_NAME} SHARED
     src/ascii.cpp
-    src/bsocket.cpp
-    src/mcsocket.cpp
-    src/ssocket.cpp
+    # src/bsocket.cpp
+    # src/mcsocket.cpp
+    src/udpsocket.cpp
+    src/socket.cpp
 )
 target_include_directories(${PROJECT_NAME}
     PUBLIC
