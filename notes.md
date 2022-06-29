@@ -35,3 +35,55 @@ char ip4[INET_ADDRSTRLEN];  // space to hold the IPv4 string
 inet_ntop(AF_INET, &(sa.sin_addr), ip4, INET_ADDRSTRLEN);
 printf("The IPv4 address is: %s\n", ip4);
 ```
+
+# CMake
+
+To pull this library from github and use it in a program:
+
+```cmake
+cmake_minimum_required(VERSION 3.10.0)
+project(ps VERSION 0.0.1 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+cmake_host_system_information(RESULT HOST QUERY HOSTNAME)
+cmake_host_system_information(RESULT OSN QUERY OS_NAME)
+cmake_host_system_information(RESULT OS_VERSION QUERY OS_RELEASE)
+cmake_host_system_information(RESULT PROC QUERY PROCESSOR_DESCRIPTION)
+
+message(STATUS "-------------------------------------")
+message(STATUS "  Project: ${PROJECT_NAME}")
+message(STATUS "  C++ ${CMAKE_CXX_STANDARD}")
+message(STATUS "-------------------------------------")
+message(STATUS " ${HOST}")
+message(STATUS " ${OSN}: ${OS_VERSION}")
+message(STATUS " ${PROC}")
+message(STATUS "-------------------------------------")
+
+
+# Library =====================================================================
+
+include(ExternalProject)
+ExternalProject_Add(marko-proj
+  GIT_REPOSITORY    https://github.com/gecko-robotics/marko.cpp.git
+  GIT_TAG           main
+  SOURCE_DIR        "${CMAKE_CURRENT_BINARY_DIR}/marko/src"
+  BINARY_DIR        "${CMAKE_CURRENT_BINARY_DIR}/marko"
+  # CONFIGURE_COMMAND ""
+  # BUILD_COMMAND     ""
+  # INSTALL_COMMAND   ""
+  # TEST_COMMAND      ""
+)
+
+SET(MARKO_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/marko/src/include)
+SET(MARKO_LIB_DIR ${CMAKE_CURRENT_BINARY_DIR}/marko)
+
+# Binary ======================================================================
+add_executable(${PROJECT_NAME} ps.cpp)
+add_dependencies(${PROJECT_NAME} marko-proj)
+target_include_directories(${PROJECT_NAME} PRIVATE ${MARKO_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME} PRIVATE marko)
+target_link_directories(${PROJECT_NAME} PRIVATE ${MARKO_LIB_DIR})
+```
