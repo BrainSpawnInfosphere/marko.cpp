@@ -38,7 +38,14 @@ printf("The IPv4 address is: %s\n", ip4);
 
 # CMake
 
-To pull this library from github and use it in a program:
+Setup your source like:
+
+```
+main.cpp
+CMakeTexts.txt
+```
+
+To pull this library from github and use it in a program, set your `CMakeTexts.txt` up like:
 
 ```cmake
 cmake_minimum_required(VERSION 3.10.0)
@@ -86,4 +93,13 @@ add_dependencies(${PROJECT_NAME} marko-proj)
 target_include_directories(${PROJECT_NAME} PRIVATE ${MARKO_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} PRIVATE marko)
 target_link_directories(${PROJECT_NAME} PRIVATE ${MARKO_LIB_DIR})
+```
+
+Now do:
+
+```
+mkdir build
+cd build
+cmake ..
+make
 ```
