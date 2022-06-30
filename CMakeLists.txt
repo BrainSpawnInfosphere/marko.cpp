@@ -63,4 +63,4 @@ endif()
 # set(MARKO_INCLUDE "${CMAKE_INSTALL_PREFIX}/include/marko")
 
 # set(CMAKE_INSTALL_PREFIX "/opt/gecko")
-# include("cmake/template.cmake")
+include("cmake/template.cmake")
