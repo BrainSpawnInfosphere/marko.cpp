@@ -103,7 +103,7 @@ public:
         sockaddr_t addr;
         while (event.is_set()) {
             bool good = socket.recvfrom(&s, sizeof(REQ), addr);
-            std::cout << good << std::endl;
+            // std::cout << good << std::endl;
             if (!good) {
                 // std::cout << "miss" << std::endl;
                 continue;
