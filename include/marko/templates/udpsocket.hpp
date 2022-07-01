@@ -9,16 +9,21 @@
 #include <functional> // std::function
 #include <string>
 #include <vector>
-#include <iostream>
-
+#include <cstdio>
 #include <marko/udpsocket.hpp>
 #include <marko/utils.hpp>
+
+constexpr int TIMEOUT=1000;
 
 
 ////////////////////////////////////////////////////////
 //       TEMPLATES
 ////////////////////////////////////////////////////////
 
+
+////////////////////////////////////////////////////////
+//       Publisher / Subscriber
+////////////////////////////////////////////////////////
 
 template <typename T>
 class TSubscriber: public Base {
@@ -31,11 +36,9 @@ public:
     void register_cb(TSubCallback_t f){
         cb.push_back(f);
     }
-    // void loop() {
-    //     Event event;
-    //     loop(event);
-    // }
-    void loop(Event& event){
+
+    void loop(Event& event, int timeout=TIMEOUT){
+        socket.settimeout(timeout);
         T s;
         sockaddr_t from_addr;
         while (event.is_set()) {
@@ -46,13 +49,8 @@ public:
         }
     }
 
-    // void shutdown() {
-    //     event.clear();
-    // }
-
 protected:
     std::vector< TSubCallback_t > cb;
-    // Event event;
 };
 
 template <typename T>
@@ -71,6 +69,12 @@ public:
 };
 
 
+
+////////////////////////////////////////////////////////
+//       Request / Reply
+////////////////////////////////////////////////////////
+
+
 template <typename REQ, typename REPLY>
 class TReply: public Base {
 public:
@@ -84,11 +88,17 @@ public:
     void register_cb(TReplyCallback_t f){
         cb.push_back(f);
     }
-    void loop(Event& event){
+    void loop(Event& event, int timeout=TIMEOUT){
+        socket.settimeout(timeout);
         REQ s;
         sockaddr_t addr;
         while (event.is_set()) {
-            socket.recvfrom(&s, sizeof(REQ), addr);
+            bool good = socket.recvfrom(&s, sizeof(REQ), addr);
+            std::cout << good << std::endl;
+            if (!good) {
+                // std::cout << "miss" << std::endl;
+                continue;
+            }
             for (const auto& callback: this->cb){
                 REPLY reply = callback(s);
                 socket.sendto(&reply, sizeof(REPLY), addr);
@@ -96,26 +106,21 @@ public:
         }
     }
 
-    // void shutdown() {
-    //     event.clear();
-    // }
-
 protected:
     std::vector<TReplyCallback_t> cb;
-    // Event event;
 };
 
-template <typename T, typename V>
+template <typename REQ, typename REP>
 class TRequest: public Base {
 public:
     TRequest(){}
     ~TRequest(){}
 
-    V request(const T& data, const sockaddr_t& addr){
-        socket.sendto(&data, sizeof(T), addr);
-        V reply;
+    REP request(const REQ& data, const sockaddr_t& addr){
+        socket.sendto(&data, sizeof(REQ), addr);
+        REP reply;
         sockaddr_t tmp;
-        socket.recvfrom(&reply, sizeof(V), tmp);
+        socket.recvfrom(&reply, sizeof(REP), tmp);
         return reply;
     }
 };

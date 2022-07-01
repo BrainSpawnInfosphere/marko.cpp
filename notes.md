@@ -36,6 +36,51 @@ inet_ntop(AF_INET, &(sa.sin_addr), ip4, INET_ADDRSTRLEN);
 printf("The IPv4 address is: %s\n", ip4);
 ```
 
+### Reusable
+
+```c
+int on = 1;
+setsockopt(sock, SOL_SOCKET,  SO_REUSEADDR, (char *)&on, sizeof(on));
+```
+
+### Nonblocking
+
+```c
+int on = 1;
+int err = 0;
+
+// this appears unnecessary ... it will enable nonblocking, but you still
+// need select to set timeout
+err = ioctl(sock, FIONBIO, (char *)&on);
+
+// set timeout for 100 ms
+timeout.tv_sec  = 0;
+timeout.tv_usec = 100 * 1000; // this is usec (1000usec = 1msec)
+
+fd_set readfds;         // read file descriptor
+FD_ZERO(&readfds);      // clear
+FD_SET(sock, &readfds); // puts sock into fd_set
+
+// if err is 0, then nothing happened
+err = select(sock + 1, &working_set, NULL, NULL, &timeout);
+
+// unnecessary, but you can check to see if data there ... err above already
+// tells you that.
+if (FD_ISSET(sock, &readfds) == 0) { /* no data */ }
+```
+
+> On success, `select()` and `pselect()` return the number of file
+descriptors contained in the three returned descriptor sets (that
+is, the total number of bits that are set in readfds, writefds,
+exceptfds).  **The return value may be zero if the timeout expired
+before any file descriptors became ready.**
+>
+> On error, -1 is returned, and errno is set to indicate the error;
+> the file descriptor sets are unmodified, and timeout becomes
+> undefined.
+>
+> [ref](https://man7.org/linux/man-pages/man2/select.2.html)
+
 # CMake
 
 Setup your source like:
@@ -79,8 +124,8 @@ ExternalProject_Add(marko-proj
   SOURCE_DIR        "${CMAKE_CURRENT_BINARY_DIR}/marko/src"
   BINARY_DIR        "${CMAKE_CURRENT_BINARY_DIR}/marko"
   # CONFIGURE_COMMAND ""
-  # BUILD_COMMAND     ""
-  # INSTALL_COMMAND   ""
+  BUILD_COMMAND     "make"
+  INSTALL_COMMAND   ""
   # TEST_COMMAND      ""
 )
 

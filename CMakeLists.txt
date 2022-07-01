@@ -49,7 +49,7 @@ target_include_directories(${PROJECT_NAME}
 # add_library(Marko::marko ALIAS ${PROJECT_NAME})
 
 # Examples ====================================================================
-option(EXAMPLES "Simple examples" OFF)
+option(EXAMPLES "Simple examples" ON)
 if (EXAMPLES)
     add_subdirectory(examples)
 endif()

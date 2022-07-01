@@ -90,7 +90,7 @@ public:
  */
 class Socket {
 public:
-    Socket(int family, int type, int proto, int timeout=0);
+    Socket(int family, int type, int proto);
 
     void close();
     void bind(const std::string& saddr, int port);
@@ -98,14 +98,20 @@ public:
     sockaddr_t getpeername();  // get remote address
     sockaddr_t getsockname();  // get local address
     msgaddr_t recvfrom();
-    void recvfrom(void* dst, int size, sockaddr_t& addr);
+    bool recvfrom(void* dst, int size, sockaddr_t& addr);
+    // bool recvfrom_nb(void* dst, int size, sockaddr_t& from_addr);
     void sendto(const std::string& sdata, const sockaddr_t& addr);
     void sendto(const void* data, int size, const sockaddr_t& addr);
     void setsockopt(int level, int name, int val);
-    void setblocking(bool val){throw NotImplemented();}
-    void settimeout(float sec){throw NotImplemented();}
+    void setnonblocking();
+    void settimeout(int msec);
 
-    int family, proto, type, timeout;
+    void accept(){throw NotImplemented();}
+    void connect(){throw NotImplemented();}
+    void listen(){throw NotImplemented();}
+
+    int family, proto, type;
+    int timeout; // msec
 
 protected:
     SOCKET sock;
