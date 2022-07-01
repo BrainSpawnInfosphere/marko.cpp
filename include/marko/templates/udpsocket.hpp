@@ -13,7 +13,7 @@
 #include <marko/udpsocket.hpp>
 #include <marko/utils.hpp>
 
-constexpr int TIMEOUT=1000;
+constexpr int TIMEOUT=5000;
 
 
 ////////////////////////////////////////////////////////
@@ -65,6 +65,11 @@ public:
         }
     }
 
+    // value?
+    inline void setClientAddr(const sockaddr_t& c){
+        clientaddr.push_back(c);
+    }
+
     std::vector<sockaddr_t> clientaddr;
 };
 
@@ -78,14 +83,18 @@ public:
 template <typename REQ, typename REPLY>
 class TReply: public Base {
 public:
-    TReply(const std::string& addr, int port){
-        socket.bind(addr, port);
-    }
+    // TReply(const std::string& addr, int port){
+    //     socket.bind(addr, port);
+    // }
+    TReply(){}
     ~TReply(){}
 
     typedef std::function<REPLY(const REQ&)> TReplyCallback_t;
 
-    void register_cb(TReplyCallback_t f){
+    inline void bind(const std::string& addr, int port){
+        socket.bind(addr, port);
+    }
+    inline void register_cb(TReplyCallback_t f){
         cb.push_back(f);
     }
     void loop(Event& event, int timeout=TIMEOUT){

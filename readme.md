@@ -7,6 +7,17 @@ or broadcast to send/receive a message.
 
 > **Multicast:** one-to-many (group) communications, this can only be UDP
 
+## Features
+
+- `Socket` modelled after python socket module
+    - UDP and UDS
+    - blocking/non-blocking
+    - `recvfrom()` has timeout option
+- `Publisher/Subscriber/Reply/Request`
+    - template for `struct`s on `send()` and `recvfrom()`
+    - one way: `Publisher` -> `Subscriber`
+    - bi-directional: `Reply` <-> `Request`
+
 ## Usage
 
 This library requires a C++17 compiler and an up to date `cmake`.
@@ -93,9 +104,14 @@ int main(int argc, char *argv[]){
 
 - https://github.com/nanomsg/nng
 
+## Todo
+
+- [ ] Include Unix Domain Sockets in pub/sub/reply/request
+- [ ] Remove non-template functions and `recvbuffer[]` in `Socket`
+
 # MIT License
 
-**Copyright (c) 2019 Kevin J. Walchko**
+**Copyright (c) 2014 Kevin J. Walchko**
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -43,6 +43,30 @@ int on = 1;
 setsockopt(sock, SOL_SOCKET,  SO_REUSEADDR, (char *)&on, sizeof(on));
 ```
 
+### Timeout
+
+I think I like timeout better than nonblocking or `select`. `select` has to
+be done everytime you read a socket and nonblocking raises signals that need
+to be caught.
+
+```c
+struct timeval tv;
+long sec = 0;
+long msec = 0;
+
+int timeout = 5000; // msec
+
+if (timeout >= 1000) {
+    sec = (long)timeout/1000;
+    timeout %= 1000;
+}
+
+tv.tv_sec = sec;
+tv.tv_usec = msec * 1000;
+
+err = ::setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+```
+
 ### Nonblocking
 
 ```c

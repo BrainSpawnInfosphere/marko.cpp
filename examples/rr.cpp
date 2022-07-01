@@ -1,5 +1,5 @@
 #include <iostream>
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -31,11 +31,11 @@ void request(){
     msg.c[0] = 100;
     response_t resp = r.request(msg, addr);
 
-    cout << resp.a << endl;
+    printf("resp: %d\n", resp.a);
 }
 
 response_t cb(const data_t& s){
-    cout << "cb "<< s.a << " " << s.b << " " << s.c[0] << " "<< sizeof(s) << endl;
+    printf("cb: %f %d %d %lu\n",s.a,s.b,s.c[0],sizeof(s));
     response_t r;
     r.a = 1;
     return r;
@@ -44,57 +44,11 @@ response_t cb(const data_t& s){
 void reply(){
     Event e;
     e.set();
-    TReply<data_t,response_t> r(HOST,PORT);
+    TReply<data_t,response_t> r;
+    r.bind(HOST,PORT);
     r.register_cb(cb);
     r.loop(e);
 }
-
-//
-// void request(){
-//
-//     // Packer packer;
-//     bytearray b;
-//     sockaddr_t addr = make(HOST,PORT);
-//
-//     Request r;
-//     b.pack("hello");
-//     string msg = b.to_string();
-//     string ans = r.request(msg, addr);
-//
-//     cout << ans << endl;
-//     cout << sizeof("hello") << endl;
-//     cout << sizeof(ans) << " " << ans.size() << endl;
-//     cout << "msg " << msg << " " << msg.size() << endl;
-//     cout << sizeof(b) << endl;
-//
-//     typedef struct MSG {
-//         char a,b,c,d;
-//         float e,f,g;
-//     } msg_t;
-//
-//     TSubscriber<msg_t> sub;
-//
-//     msg_t m;
-//     b.pack(&m, sizeof(m));
-//     b.to_struct(ans, &m);
-//     cout << m.e << endl;
-// }
-//
-// string cb(const string& s){
-//     bytearray packer;
-//     cout << s << endl;
-//     packer.packf("ccccfff",'a','b','c','d',1.2,2.3,3.4);
-//
-//     // string ss(packer.buffer.c, 3*sizeof(float));
-//     string ss = packer.to_string();
-//     return ss;
-// }
-//
-// void reply(){
-//     Reply r(HOST,PORT);
-//     r.register_cb(cb);
-//     r.loop();
-// }
 
 int main(int argc, char *argv[]){
     if (argc != 2) {

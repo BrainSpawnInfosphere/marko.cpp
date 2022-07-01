@@ -7,8 +7,12 @@
 
 using namespace std;
 
-extern int errno; // don't like this
+extern int errno; // don't like this global value
 
+/**
+ * Handles old C socket functions and throws SocketError with error description
+ * from errno.
+ */
 int guard(int err, std::string msg){
     if (err < 0) {
         throw SocketError(msg + string(strerror( int(errno) )));
@@ -35,14 +39,6 @@ sockaddr_t make(const string& saddr, int port){
 //     return std::move(addr);
 // }
 
-// static
-// std::map<int, std::string> debug_setsockopt = {
-//     {SO_REUSEADDR,       "SO_REUSEADDR"},
-//     {IP_MULTICAST_TTL,   "IP_MULTICAST_TTL"},
-//     {IP_MULTICAST_LOOP,  "IP_MULTICAST_LOOP"},
-//     {IP_ADD_MEMBERSHIP,  "IP_ADD_MEMBERSHIP"},
-//     {IP_DROP_MEMBERSHIP, "IP_DROP_MEMBERSHIP"}
-// };
 
 Socket::Socket(int family, int type, int proto) {
     // create a UDP socket
@@ -95,17 +91,6 @@ sockaddr_t Socket::getsockname(){
  * This will cause a socket recvfrom to return after the timeout period
  */
 void Socket::settimeout(int timeout){
-    // int flags = guard(fcntl(sock, F_GETFL), "setblocking(): ");
-    // guard(fcntl(sock, F_SETFL, flags | O_NONBLOCK), "setblocking(): ");
-
-
-    // struct timeval timeout;
-    // timeout.tv_sec = 0;
-    // timeout.tv_usec = 10000; // 10ms
-    //
-    // guard(::setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout,
-    //             sizeof(timeout)), "setblocking(): ");
-
     this->timeout = timeout;
 
     struct timeval tv;
@@ -129,10 +114,14 @@ void Socket::settimeout(int timeout){
  * This will throw a signal that must be caught
  */
 void Socket::setnonblocking(){
+    // int flags = guard(fcntl(sock, F_GETFL), "setblocking(): ");
+    // guard(fcntl(sock, F_SETFL, flags | O_NONBLOCK), "setblocking(): ");
+
     int on = 1;
     guard(ioctl(sock, FIONBIO, (char *)&on), "setnonblocking(): ");
 }
 
+// [DEPRECATED]
 msgaddr_t Socket::recvfrom(){
     // clear the receive buffers & structs
     memset(recv_str, 0, sizeof(recv_str)); // clear buffer
@@ -151,32 +140,8 @@ msgaddr_t Socket::recvfrom(){
         throw SocketError("recvfrom() failed");
     }
 
-    // std::string ss(recv_str);
-    // std::cout << "recvfrom " << ss << " " << ss.size() << std::endl;
-
     return msgaddr_t({recv_str}, from_addr);
-    // return msgaddr_t{{recv_str}, from_addr};
 }
-
-// void Socket::recvfrom(void* dst, int size, sockaddr_t& from_addr){
-//     memset(dst, 0, size); // clear buffer
-//
-//     from_addr = {0};
-//     unsigned int from_len = sizeof(from_addr);
-//     int recv_len = 0;
-//     // int flags = MSG_DONTWAIT; // nonblocking
-//     int flags = 0;
-//
-//     // block waiting to receive a packet
-//     recv_len = ::recvfrom(
-//         sock,
-//         dst, (size_t)size, flags,
-//         (struct sockaddr*)&from_addr, &from_len);
-//     if (recv_len != size) {
-//         throw SocketError("recvfrom() failed");
-//     }
-// }
-
 
 bool Socket::recvfrom(void* dst, int size, sockaddr_t& from_addr){
     // if timeout set, use select to determine if data ready
@@ -216,11 +181,12 @@ bool Socket::recvfrom(void* dst, int size, sockaddr_t& from_addr){
     unsigned int from_len = sizeof(from_addr);
     int recv_len = 0;
     // int flags = MSG_DONTWAIT; // nonblocking - sends signal you must catch
+    const int flags = 0;
 
     // block waiting to receive a packet
     recv_len = ::recvfrom(
         sock,
-        dst, (size_t)size, 0,
+        dst, (size_t)size, flags,
         (struct sockaddr*)&from_addr, &from_len);
 
     if (recv_len != size) {
@@ -246,4 +212,21 @@ void Socket::sendto(const void* data, int size, const sockaddr_t& addr){
 
 void Socket::setsockopt(int level, int name, int val){
     guard(::setsockopt(sock, level, name, (char*) &val, sizeof(val)), "setsockopt(): ");
+}
+
+// value?
+bool Socket::ready(){
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 1000;
+
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(sock, &readfds); // get sock info
+
+    // don't care about writefds and exceptfds:
+    int status = select(sock+1, &readfds, NULL, NULL, &tv);
+    if (status == 0) return false;
+    else if (status < 0) guard(status, "recvfrom(): ");
+    return true;
 }
