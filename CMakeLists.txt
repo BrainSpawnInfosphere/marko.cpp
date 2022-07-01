@@ -1,18 +1,18 @@
 cmake_minimum_required(VERSION 3.10.0)
-project(marko VERSION 0.6.0 LANGUAGES CXX)
+project(marko VERSION 2022.6.30 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 cmake_host_system_information(RESULT HOST QUERY HOSTNAME)
-# cmake_host_system_information(RESULT CORES QUERY NUMBER_OF_LOGICAL_CORES)
 cmake_host_system_information(RESULT OSN QUERY OS_NAME)
 cmake_host_system_information(RESULT OS_VERSION QUERY OS_RELEASE)
 cmake_host_system_information(RESULT PROC QUERY PROCESSOR_DESCRIPTION)
 
 message(STATUS "-------------------------------------")
 message(STATUS "  Project: ${PROJECT_NAME}")
+message(STATUS "  Version: ${CMAKE_PROJECT_VERSION}")
 message(STATUS "  C++ ${CMAKE_CXX_STANDARD}")
 message(STATUS "-------------------------------------")
 message(STATUS " ${HOST}")

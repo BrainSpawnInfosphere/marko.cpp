@@ -9,8 +9,10 @@
 #include <functional> // std::function
 #include <string>
 #include <vector>
-#include <marko/udpsocket.hpp>
 #include <iostream>
+
+#include <marko/udpsocket.hpp>
+#include <marko/utils.hpp>
 
 
 ////////////////////////////////////////////////////////
@@ -29,10 +31,14 @@ public:
     void register_cb(TSubCallback_t f){
         cb.push_back(f);
     }
-    void loop(){
+    // void loop() {
+    //     Event event;
+    //     loop(event);
+    // }
+    void loop(Event& event){
         T s;
         sockaddr_t from_addr;
-        while (true) {
+        while (event.is_set()) {
             this->socket.recvfrom(&s, sizeof(s), from_addr);
             for (const auto& callback: this->cb){
                 callback(s);
@@ -40,8 +46,13 @@ public:
         }
     }
 
+    // void shutdown() {
+    //     event.clear();
+    // }
+
 protected:
     std::vector< TSubCallback_t > cb;
+    // Event event;
 };
 
 template <typename T>
@@ -60,7 +71,7 @@ public:
 };
 
 
-template <typename T, typename V>
+template <typename REQ, typename REPLY>
 class TReply: public Base {
 public:
     TReply(const std::string& addr, int port){
@@ -68,25 +79,30 @@ public:
     }
     ~TReply(){}
 
-    typedef std::function<V(const T&)> TReplyCallback_t;
+    typedef std::function<REPLY(const REQ&)> TReplyCallback_t;
 
     void register_cb(TReplyCallback_t f){
         cb.push_back(f);
     }
-    void loop(){
-        T s;
+    void loop(Event& event){
+        REQ s;
         sockaddr_t addr;
-        while (true) {
-            socket.recvfrom(&s, sizeof(T), addr);
+        while (event.is_set()) {
+            socket.recvfrom(&s, sizeof(REQ), addr);
             for (const auto& callback: this->cb){
-                V reply = callback(s);
-                socket.sendto(&reply, sizeof(V), addr);
+                REPLY reply = callback(s);
+                socket.sendto(&reply, sizeof(REPLY), addr);
             }
         }
     }
 
+    // void shutdown() {
+    //     event.clear();
+    // }
+
 protected:
     std::vector<TReplyCallback_t> cb;
+    // Event event;
 };
 
 template <typename T, typename V>

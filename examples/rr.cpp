@@ -5,6 +5,7 @@
 
 #include <marko/templates/udpsocket.hpp>
 #include <marko/packer.hpp>
+#include <marko/utils.hpp>
 
 using namespace std;
 
@@ -41,9 +42,11 @@ response_t cb(const data_t& s){
 }
 
 void reply(){
+    Event e;
+    e.set();
     TReply<data_t,response_t> r(HOST,PORT);
     r.register_cb(cb);
-    r.loop();
+    r.loop(e);
 }
 
 //

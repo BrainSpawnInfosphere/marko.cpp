@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <marko/templates/udpsocket.hpp>
+#include <marko/utils.hpp>
 
 using namespace std;
 
@@ -11,8 +12,6 @@ string HOST{"10.0.1.116"};
 int PORT = 9999;
 
 typedef struct Data {
-    // Data(): a(-1.0), b(-1) {}
-    // Data(double f, int i): a(f), b(i) {}
     double a;
     int b;
     void print() const {
@@ -42,11 +41,13 @@ void cb(const data_t& s){
 }
 
 void sub(){
+    Event e;
+    e.set();
 
     TSubscriber<data_t> s;
     s.bind(HOST, PORT);
     s.register_cb(cb);
-    s.loop();
+    s.loop(e);
 }
 
 int main(int argc, char *argv[]){
