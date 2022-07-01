@@ -1,6 +1,8 @@
 #pragma once
 
 #include <atomic>
+#include <exception>
+#include <signal.h>
 
 // https://gist.github.com/jncornett/e449826d2a1bd6b481f818176be0d2de
 // https://stackoverflow.com/questions/69385119/how-do-wait-and-notify-work-for-stdatomic-in-c20
@@ -20,9 +22,6 @@ protected:
 };
 
 
-
-#include <signal.h>
-
 /*
 https://stackoverflow.com/questions/1641182/how-can-i-catch-a-ctrl-c-event
 https://www.geeksforgeeks.org/inheritance-in-c/
@@ -41,32 +40,38 @@ kevin@Logan build $ kill -l
 29) SIGINFO	30) SIGUSR1	31) SIGUSR2
 */
 
-/*
- This class captures the SIGINT signal and sets ok to false. Since ok is
- static, any class that inherits this will see the status change and
- allow it close down cleanly.
+/**
+ * Captures a signal and calls a callback function.
+ *
+ * ref: https://man7.org/linux/man-pages/man2/sigaction.2.html
  */
-class SigCapture {
+class SignalFunc {
 public:
-    SigCapture(): enabled(false) {}
-    static void my_handler(int s) { ok = false; }
-    void on(){
+    SignalFunc() {}
+    void enable(void(*f)(int), int signum=SIGINT) {
         if (enabled) return;
 
+        if (signum == SIGKILL || signum == SIGKILL) {
+            throw std::invalid_argument("** Cannot capture signals SIGKILL or SIGSTOP");
+        }
+
         struct sigaction sigIntHandler;
-        sigIntHandler.sa_handler = SigCapture::my_handler;
+        sigIntHandler.sa_handler = f;
         sigemptyset(&sigIntHandler.sa_mask);
         sigIntHandler.sa_flags = 0;
 
-        sigaction(SIGINT, &sigIntHandler, NULL);
+        sigaction(signum, &sigIntHandler, NULL);
 
         enabled = true;
     }
-    void shutdown() { ok = false; }
-
-// protected:
-    static bool ok;     // global status on if a SIGINT has occured
-    bool enabled;
+protected:
+    bool enabled{false};
 };
 
-bool SigCapture::ok = true;
+/**
+ * Combination of the Event and SignalFunc classes.
+ */
+class EventSignal: public Event, public SignalFunc {
+public:
+    EventSignal() {}
+};
