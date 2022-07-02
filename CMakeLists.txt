@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.10.0)
-project(marko VERSION 2022.6.30.1 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.14.0)
+project(marko VERSION 2022.7.1.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
