@@ -51,8 +51,8 @@ public:
     void enable(void(*f)(int), int signum=SIGINT) {
         if (enabled) return;
 
-        if (signum == SIGKILL || signum == SIGKILL) {
-            throw std::invalid_argument("** Cannot capture signals SIGKILL or SIGSTOP");
+        if (signum == SIGKILL || signum == SIGSTOP) {
+            throw std::invalid_argument("** Cannot capture signals SIGKILL or SIGSTOP **");
         }
 
         struct sigaction sigIntHandler;

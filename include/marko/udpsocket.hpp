@@ -6,19 +6,14 @@
 
 #pragma once
 
-
 #include <functional> // std::function
 #include <string>
 #include <vector>
+#include <cstdio>
 #include <marko/socket.hpp>
-#include <iostream>
+#include <marko/utils.hpp>
 
-// // https://github.com/troydhanson/network/blob/master/unixdomain/01.basic/srv.c
-// // https://gist.github.com/Phaiax/ae7d1229e6f078457864dae712c51ae0
-// class UDSSocket: public Socket {
-// public:
-//     UDSSocket(int timeout=0): Socket(AF_UNIX, SOCK_STREAM, 0){}
-// };
+constexpr int TIMEOUT=5000;
 
 /*
  * Simple UDP socket base class for query/response architecture. Not really
@@ -35,7 +30,7 @@ public:
     Base(){;}
 
     void info(){;}
-    void bind(const std::string& addr, int port) {
+    inline void bind(const std::string& addr, int port) {
         socket.bind(addr, port);
     }
 
@@ -43,79 +38,120 @@ protected:
     UDPSocket socket;
 };
 
-typedef std::function<void(const std::string&)> SubCallback_t;
+////////////////////////////////////////////////////////
+//       TEMPLATES
+////////////////////////////////////////////////////////
 
-class Subscriber: public Base {
+
+////////////////////////////////////////////////////////
+//       Publisher / Subscriber
+////////////////////////////////////////////////////////
+
+template <typename T>
+class TSubscriber: public Base {
 public:
-    Subscriber(){;}
-    ~Subscriber(){;}
+    TSubscriber(){;}
+    ~TSubscriber(){;}
 
-    void register_cb(SubCallback_t f){
+    typedef std::function<void(const T&)> TSubCallback_t;
+
+    void register_cb(TSubCallback_t f){
         cb.push_back(f);
     }
-    void loop(){
-        while (true) {
-            msgaddr_t ret = this->socket.recvfrom();
+
+    void loop(Event& event, int timeout=TIMEOUT){
+        socket.settimeout(timeout);
+        T s;
+        sockaddr_t from_addr;
+        while (event.is_set()) {
+            this->socket.recvfrom(&s, sizeof(s), from_addr);
             for (const auto& callback: this->cb){
-                callback(ret.data);
+                callback(s);
             }
         }
     }
 
 protected:
-    std::vector<SubCallback_t> cb;
+    std::vector< TSubCallback_t > cb;
 };
 
-class Publisher: public Base {
+template <typename T>
+class TPublisher: public Base {
 public:
-    Publisher(){;}
-    ~Publisher(){;}
+    TPublisher(){}
+    ~TPublisher(){}
 
-    void publish(const std::string& data){
+    void publish(const T& data){
         for(const auto& addr: clientaddr){
-            socket.sendto(data, addr);
+            socket.sendto(&data, sizeof(T), addr);
         }
+    }
+
+    // value?
+    inline void setClientAddr(const sockaddr_t& c){
+        clientaddr.push_back(c);
     }
 
     std::vector<sockaddr_t> clientaddr;
 };
 
-typedef std::function<std::string(const std::string&)> ReplyCallback_t;
 
-class Reply: public Base {
+
+////////////////////////////////////////////////////////
+//       Request / Reply
+////////////////////////////////////////////////////////
+
+
+template <typename REQ, typename REPLY>
+class TReply: public Base {
 public:
-    Reply(const std::string& addr, int port){
-        socket.bind(addr, port);
-    }
-    ~Reply(){}
+    // TReply(const std::string& addr, int port){
+    //     socket.bind(addr, port);
+    // }
+    TReply(){}
+    ~TReply(){}
 
-    void register_cb(ReplyCallback_t f){
+    typedef std::function<REPLY(const REQ&)> TReplyCallback_t;
+
+    // inline void bind(const std::string& addr, int port){
+    //     socket.bind(addr, port);
+    // }
+    inline void register_cb(TReplyCallback_t f){
         cb.push_back(f);
     }
-    void loop(){
-        while (true) {
-            msgaddr_t ret = this->socket.recvfrom();
+    void loop(Event& event, int timeout=TIMEOUT){
+        socket.settimeout(timeout);
+        REQ s;
+        sockaddr_t addr;
+        while (event.is_set()) {
+            bool good = socket.recvfrom(&s, sizeof(REQ), addr);
+            // std::cout << good << std::endl;
+            if (!good) {
+                // std::cout << "miss" << std::endl;
+                continue;
+            }
             for (const auto& callback: this->cb){
-                std::string reply = callback(ret.data);
-                socket.sendto(reply, ret.address);
+                REPLY reply = callback(s);
+                socket.sendto(&reply, sizeof(REPLY), addr);
             }
         }
     }
 
 protected:
-    std::vector<ReplyCallback_t> cb;
+    std::vector<TReplyCallback_t> cb;
 };
 
-class Request: public Base {
+template <typename REQ, typename REP>
+class TRequest: public Base {
 public:
-    Request(){}
-    ~Request(){}
+    TRequest(){}
+    ~TRequest(){}
 
-    std::string request(
-            const std::string& data,
-            const sockaddr_t& addr){
-        socket.sendto(data, addr);
-        msgaddr_t ret = socket.recvfrom();
-        return ret.data;
+    REP request(const REQ& data, const sockaddr_t& addr){
+        socket.sendto(&data, sizeof(REQ), addr);
+        REP reply;
+        sockaddr_t tmp;
+        socket.recvfrom(&reply, sizeof(REP), tmp);
+        return reply;
     }
 };

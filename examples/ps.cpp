@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include <marko/templates/udpsocket.hpp>
+#include <marko/udpsocket.hpp>
 #include <marko/utils.hpp>
 
 using namespace std;
