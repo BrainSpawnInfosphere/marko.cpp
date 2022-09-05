@@ -44,7 +44,7 @@ typedef struct cMsgAddr {
  * useful? replaces sockaddr_t and make()
  */
 struct HostPort {
-public:
+// public:
     HostPort() {
         caddr = {0};
     }

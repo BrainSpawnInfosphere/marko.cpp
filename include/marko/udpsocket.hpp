@@ -30,6 +30,7 @@ public:
     Base(){;}
 
     void info(){;}
+    
     inline void bind(const std::string& addr, int port) {
         socket.bind(addr, port);
     }
@@ -119,6 +120,7 @@ public:
     inline void register_cb(TReplyCallback_t f){
         cb.push_back(f);
     }
+
     void loop(Event& event, int timeout=TIMEOUT){
         socket.settimeout(timeout);
         REQ s;
