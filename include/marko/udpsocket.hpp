@@ -30,7 +30,7 @@ public:
     Base(){;}
 
     void info(){;}
-    
+
     inline void bind(const std::string& addr, int port) {
         socket.bind(addr, port);
     }
@@ -70,6 +70,16 @@ public:
                 callback(s);
             }
         }
+    }
+
+    void once(int timeout=TIMEOUT){
+      socket.settimeout(timeout);
+      T s;
+      sockaddr_t from_addr;
+      this->socket.recvfrom(&s, sizeof(s), from_addr);
+      for (const auto& callback: this->cb){
+          callback(s);
+      }
     }
 
 protected:
