@@ -34,7 +34,7 @@ cmake ..
 #include <stdio.h>
 #include <string>
 #include <vector>
-#include <marko/templates/udpsocket.hpp>
+#include <marko/marko.hpp>
 
 using namespace std;
 

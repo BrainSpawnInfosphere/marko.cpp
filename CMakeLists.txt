@@ -82,6 +82,13 @@ if (EXAMPLES)
     add_subdirectory(examples)
 endif()
 
+# Tests =======================
+option(BUILD_TESTS "Tests" ON)
+message(STATUS "Building tests is ${BUILD_TESTS}")
+if (BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
+
 # Install =====================================================================
 # set(MARKO_BASE_PATH "/opt/gecko")
 # set(CMAKE_INSTALL_PREFIX ${MARKO_BASE_PATH})
