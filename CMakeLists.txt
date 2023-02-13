@@ -95,7 +95,7 @@ endif()
 # option(BUILD_GTESTS "Tests" ON)
 message(STATUS "Building ${PROJECT_NAME} gtests is ${BUILD_GTESTS}")
 if (BUILD_TESTS)
-    add_subdirectory(tests)
+    add_subdirectory(gtests)
 endif()
 
 # Install =====================================================================
