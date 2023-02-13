@@ -76,15 +76,15 @@ target_include_directories(objlib
 # add_library(Marko::marko ALIAS ${PROJECT_NAME})
 
 # Examples ====================================================================
-option(EXAMPLES "Examples" ON)
-message(STATUS "Building examples is ${EXAMPLES}")
-if (EXAMPLES)
+option(BUILD_EXAMPLES "Examples" ON)
+message(STATUS "Building marko examples is ${BUILD_EXAMPLES}")
+if (BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
 # Tests =======================
-option(BUILD_TESTS "Tests" ON)
-message(STATUS "Building tests is ${BUILD_TESTS}")
+option(BUILD_GTESTS "Tests" ON)
+message(STATUS "Building marko gtests is ${BUILD_GTESTS}")
 if (BUILD_TESTS)
     add_subdirectory(tests)
 endif()
