@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.14.0)
-project(marko VERSION 2022.7.1.1 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.24.0)
+project(marko VERSION 2023.02.18.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -57,42 +57,16 @@ add_library(objlib OBJECT
 )
 target_include_directories(objlib
     PUBLIC
-        # ${CMAKE_SOURCE_DIR}/include
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> # marko.cpp/include
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include> # marko.cpp/include
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> # marko.cpp/include
-
-        $<INSTALL_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-        # $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include> # /Users/kevin/tmp/cpm/build
-        # $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> # /Users/kevin/tmp/cpm/build/_deps/marko-src
+        ${CMAKE_SOURCE_DIR}/include
 )
-# target_precompile_headers(objlib
-#   PUBLIC
-#     include/marko/udpsocket.hpp
-# )
-# target_compile_features(objlib PUBLIC cxx_std_20 ) # better?
-# set_target_properties(${PROJECT_NAME}-static
-#     PROPERTIES STATIC_LIBRARY_FLAGS "-no_warning_for_no_symbols"
-# )
-# set_property(
-#     TARGET ${PROJECT_NAME}-static
-#     APPEND
-#     PROPERTY STATIC_LIBRARY_FLAGS "-no_warning_for_no_symbols"
-# )
 
-# Add an alias so that library can be used inside the build tree, e.g. when testing
-# add_library(Marko::marko ALIAS ${PROJECT_NAME})
-
-# Examples ====================================================================
-# option(BUILD_EXAMPLES "Examples" ON)
+# Examples ====================
 message(STATUS "Building ${PROJECT_NAME} examples is ${BUILD_EXAMPLES}")
 if (BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
 # Tests =======================
-# option(BUILD_GTESTS "Tests" ON)
 message(STATUS "Building ${PROJECT_NAME} gtests is ${BUILD_GTESTS}")
 if (BUILD_TESTS)
     add_subdirectory(gtests)
