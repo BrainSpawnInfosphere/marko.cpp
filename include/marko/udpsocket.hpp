@@ -8,8 +8,8 @@
 
 #include <cstdio>
 #include <functional> // std::function
-#include <marko/socket.hpp>
-#include <marko/utils.hpp>
+#include "socket.hpp"
+#include "utils.hpp"
 #include <string>
 #include <vector>
 

@@ -49,15 +49,11 @@ message(STATUS ">> ${PROJECT_SOURCE_DIR}")
 # use of this here :)
 add_library(objlib OBJECT
     src/ascii.cpp
-    # src/bsocket.cpp
-    # src/mcsocket.cpp
-    src/udpsocket.cpp
     src/socket.cpp
-    include/marko/udpsocket.hpp
 )
 target_include_directories(objlib
     PUBLIC
-        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 # Examples ====================

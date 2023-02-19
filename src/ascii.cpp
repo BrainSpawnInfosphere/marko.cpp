@@ -1,5 +1,5 @@
 #include <iostream>
-#include <marko/ascii.hpp>
+#include "marko/ascii.hpp"
 #include <sstream>
 
 using namespace std;
@@ -12,7 +12,7 @@ ascii_t &Ascii::unpack(const string &str) {
     while (getline(ss, token, sep))
       toks.push_back(token);
   } catch (exception &e) {
-    cout << e.what() << endl;
+    std::cout << e.what() << std::endl;
     toks.clear();
     return toks;
   }
