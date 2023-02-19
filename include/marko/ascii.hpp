@@ -5,10 +5,8 @@
 \**************************************************/
 #pragma once
 
-
 #include <string>
 #include <vector>
-
 
 using ascii_t = std::vector<std::string>;
 
@@ -22,11 +20,11 @@ using ascii_t = std::vector<std::string>;
  */
 class Ascii {
 public:
-    Ascii(char separator='|'): sep(separator) {}
-    ascii_t& unpack(const std::string& str); // network to host
-    std::string pack(ascii_t& v);            // host to network
+  Ascii(char separator = '|') : sep(separator) {}
+  ascii_t &unpack(const std::string &str); // network to host
+  std::string pack(ascii_t &v);            // host to network
 
 protected:
-    ascii_t toks;
-    char sep;
+  ascii_t toks;
+  char sep;
 };

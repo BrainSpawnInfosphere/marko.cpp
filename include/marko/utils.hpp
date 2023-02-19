@@ -10,17 +10,16 @@
 // no need for a mutex.
 class Event {
 public:
-    Event() {}
-    Event(const Event& e) = delete; // don't allow this
-    // ~Event() = delete;
-    inline void set() noexcept  {flag.test_and_set();}
-    inline void clear() noexcept {flag.clear();}
-    inline bool is_set() const {return flag.test();}
-    inline void wait(bool val) {flag.wait(val);} // block until value met
+  Event() {}
+  Event(const Event &e) = delete; // don't allow this
+  // ~Event() = delete;
+  inline void set() noexcept { flag.test_and_set(); }
+  inline void clear() noexcept { flag.clear(); }
+  inline bool is_set() const { return flag.test(); }
+  inline void wait(bool val) { flag.wait(val); } // block until value met
 protected:
-    std::atomic_flag flag{false}; // default to false
+  std::atomic_flag flag{false}; // default to false
 };
-
 
 /*
 https://stackoverflow.com/questions/1641182/how-can-i-catch-a-ctrl-c-event
@@ -47,31 +46,34 @@ kevin@Logan build $ kill -l
  */
 class SignalFunc {
 public:
-    SignalFunc() {}
-    void enable(void(*f)(int), int signum=SIGINT) {
-        if (enabled) return;
+  SignalFunc() {}
+  void enable(void (*f)(int), int signum = SIGINT) {
+    if (enabled)
+      return;
 
-        if (signum == SIGKILL || signum == SIGSTOP) {
-            throw std::invalid_argument("** Cannot capture signals SIGKILL or SIGSTOP **");
-        }
-
-        struct sigaction sigIntHandler;
-        sigIntHandler.sa_handler = f;
-        sigemptyset(&sigIntHandler.sa_mask);
-        sigIntHandler.sa_flags = 0;
-
-        sigaction(signum, &sigIntHandler, NULL);
-
-        enabled = true;
+    if (signum == SIGKILL || signum == SIGSTOP) {
+      throw std::invalid_argument(
+          "** Cannot capture signals SIGKILL or SIGSTOP **");
     }
+
+    struct sigaction sigIntHandler;
+    sigIntHandler.sa_handler = f;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+
+    sigaction(signum, &sigIntHandler, NULL);
+
+    enabled = true;
+  }
+
 protected:
-    bool enabled{false};
+  bool enabled{false};
 };
 
 /**
  * Combination of the Event and SignalFunc classes.
  */
-class EventSignal: public Event, public SignalFunc {
+class EventSignal : public Event, public SignalFunc {
 public:
-    EventSignal() {}
+  EventSignal() {}
 };

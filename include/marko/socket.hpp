@@ -12,64 +12,58 @@
 
 #pragma once
 
-#include <sys/socket.h>
-#include <arpa/inet.h>  // for sockaddr_in
-#include <string>
-#include <iostream>
 #include "exceptions.hpp"
+#include <arpa/inet.h> // for sockaddr_in
+#include <iostream>
+#include <string>
+#include <sys/socket.h>
 
 constexpr int MAX_LEN = 256;
 
 typedef int SOCKET;
 typedef struct sockaddr_in sockaddr_t;
 
-
 // using MsgAddr = std::tuple<std::string, struct sockaddr_in>;
 
 // sockaddr_t make_sockaddr_t(host,port)
-sockaddr_t make(const std::string& saddr, int port);
+sockaddr_t make(const std::string &saddr, int port);
 
 // FIXME: not sure I like this ... was a tuple
 typedef struct cMsgAddr {
-    cMsgAddr(
-        const std::string& sdata,
-        const sockaddr_t& addr
-    ): data(sdata), address(addr){}
+  cMsgAddr(const std::string &sdata, const sockaddr_t &addr)
+      : data(sdata), address(addr) {}
 
-    sockaddr_t address;
-    std::string data;
+  sockaddr_t address;
+  std::string data;
 } msgaddr_t;
 
 /**
  * useful? replaces sockaddr_t and make()
  */
 struct HostPort {
-// public:
-    HostPort() {
-        caddr = {0};
-    }
+  // public:
+  HostPort() { caddr = {0}; }
 
-    HostPort(const sockaddr_t& addr):
-            addr(inet_ntoa(addr.sin_addr)),
-            port(ntohs(addr.sin_port)),
-            caddr(addr) {}
+  HostPort(const sockaddr_t &addr)
+      : addr(inet_ntoa(addr.sin_addr)), port(ntohs(addr.sin_port)),
+        caddr(addr) {}
 
-    HostPort(const std::string& addr, const int port): addr(addr), port(port) {
-        // memset(&caddr, 0, sizeof(caddr));
-        caddr = {0};
-        caddr.sin_family      = AF_INET;
-        caddr.sin_addr.s_addr = inet_addr(addr.c_str());
-        caddr.sin_port        = htons(port);
-    }
+  HostPort(const std::string &addr, const int port) : addr(addr), port(port) {
+    // memset(&caddr, 0, sizeof(caddr));
+    caddr = {0};
+    caddr.sin_family = AF_INET;
+    caddr.sin_addr.s_addr = inet_addr(addr.c_str());
+    caddr.sin_port = htons(port);
+  }
 
-    friend std::ostream& operator<<(std::ostream& os, const HostPort& d) {
-        os << "(" << d.addr << ":" << d.port << ")";
-        return os;
-    }
+  friend std::ostream &operator<<(std::ostream &os, const HostPort &d) {
+    os << "(" << d.addr << ":" << d.port << ")";
+    return os;
+  }
 
-    std::string addr;
-    int port;
-    sockaddr_t caddr;
+  std::string addr;
+  int port;
+  sockaddr_t caddr;
 };
 
 // std::string host_ip(){
@@ -98,32 +92,32 @@ struct HostPort {
  */
 class Socket {
 public:
-    Socket(int family, int type, int proto);
+  Socket(int family, int type, int proto);
 
-    void close();
-    void bind(const std::string& saddr, int port);
-    std::string gethostname(); // get host name
-    sockaddr_t getpeername();  // get remote address
-    sockaddr_t getsockname();  // get local address
-    inline int gettimeout(){return timeout;}
-    msgaddr_t recvfrom(); // deprecated
-    bool recvfrom(void* dst, int size, sockaddr_t& addr);
-    bool ready(); // select to see if recv has info to read
-    void sendto(const std::string& sdata, const sockaddr_t& addr);
-    void sendto(const void* data, int size, const sockaddr_t& addr);
-    void setsockopt(int level, int name, int val);
-    void setnonblocking();
-    void settimeout(int msec);
+  void close();
+  void bind(const std::string &saddr, int port);
+  std::string gethostname(); // get host name
+  sockaddr_t getpeername();  // get remote address
+  sockaddr_t getsockname();  // get local address
+  inline int gettimeout() { return timeout; }
+  msgaddr_t recvfrom(); // deprecated
+  bool recvfrom(void *dst, int size, sockaddr_t &addr);
+  bool ready(); // select to see if recv has info to read
+  void sendto(const std::string &sdata, const sockaddr_t &addr);
+  void sendto(const void *data, int size, const sockaddr_t &addr);
+  void setsockopt(int level, int name, int val);
+  void setnonblocking();
+  void settimeout(int msec);
 
-    // not sure I need these
-    void accept(){throw NotImplemented();}
-    void connect(){throw NotImplemented();}
-    void listen(){throw NotImplemented();}
+  // not sure I need these
+  void accept() { throw NotImplemented(); }
+  void connect() { throw NotImplemented(); }
+  void listen() { throw NotImplemented(); }
 
-    int family, proto, type;
+  int family, proto, type;
 
 protected:
-    int timeout; // msec
-    SOCKET sock;
-    char recv_str[MAX_LEN]; // remove?
+  int timeout; // msec
+  SOCKET sock;
+  char recv_str[MAX_LEN]; // remove?
 };

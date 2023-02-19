@@ -50,7 +50,6 @@
 //     return s;
 // }
 
-
 // UDPSocket::UDPSocket(int timeout): sock(AF_INET, SOCK_DGRAM, IPPROTO_UDP) {}
 //
 // UDPSocket::~UDPSocket(){
@@ -74,7 +73,8 @@
 // //     return r;
 // // }
 //
-// bool UDPSocket::sendto(const std::string& msg, const struct sockaddr_in& addr){
+// bool UDPSocket::sendto(const std::string& msg, const struct sockaddr_in&
+// addr){
 //     sock.sendto(msg, addr);
 //     return true;
 // }

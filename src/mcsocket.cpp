@@ -1,15 +1,17 @@
 // #include <marko/mcsocket.hpp>
 
 //
-// MCSocket::MCSocket(const std::string& group, int port): save_grp(group), port(port) {
+// MCSocket::MCSocket(const std::string& group, int port): save_grp(group),
+// port(port) {
 //         mc_addr = make(port, INADDR_ANY);
 //
 //         struct ip_mreq mreq;
 //         mreq.imr_multiaddr.s_addr = inet_addr(group.c_str());
 //         mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-//         int err = setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*) &mreq, sizeof(mreq));
-//         if (err < 0){
-//             throw MulticastError("SSock::setsockopt IP_ADD_MEMBERSHIP failed");
+//         int err = setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)
+//         &mreq, sizeof(mreq)); if (err < 0){
+//             throw MulticastError("SSock::setsockopt IP_ADD_MEMBERSHIP
+//             failed");
 //         }
 // }
 //
