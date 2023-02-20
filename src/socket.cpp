@@ -23,9 +23,9 @@ int guard(int err, std::string msg) {
 sockaddr_t make(const string &saddr, int port) {
   sockaddr_t addr;
   memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
+  addr.sin_family      = AF_INET;
   addr.sin_addr.s_addr = inet_addr(saddr.c_str());
-  addr.sin_port = htons(port);
+  addr.sin_port        = htons(port);
   // cout << ">> Addr: " << inet_ntoa(addr.sin_addr) << ":"
   // << ntohs(addr.sin_port) << endl;
   return std::move(addr);
@@ -46,8 +46,8 @@ Socket::Socket(int family, int type, int proto) {
   }
 
   this->family = family;
-  this->type = type;
-  this->proto = proto;
+  this->type   = type;
+  this->proto  = proto;
 }
 
 // INADDR_ANY - bind to all available interfaces
@@ -71,7 +71,7 @@ std::string Socket::gethostname() {
 }
 
 sockaddr_t Socket::getpeername() {
-  sockaddr_t addr = {0};
+  sockaddr_t addr      = {0};
   unsigned int addrlen = sizeof(addr);
   guard(::getpeername(sock, (struct sockaddr *)&addr, &addrlen),
         "getsockname(): ");
@@ -79,7 +79,7 @@ sockaddr_t Socket::getpeername() {
 }
 
 sockaddr_t Socket::getsockname() {
-  sockaddr_t addr = {0};
+  sockaddr_t addr      = {0};
   unsigned int addrlen = sizeof(addr);
   guard(::getsockname(sock, (struct sockaddr *)&addr, &addrlen),
         "getsockname(): ");
@@ -93,7 +93,7 @@ void Socket::settimeout(int timeout) {
   this->timeout = timeout;
 
   struct timeval tv;
-  long sec = 0;
+  long sec  = 0;
   long msec = 0;
 
   if (timeout >= 1000) {
@@ -101,7 +101,7 @@ void Socket::settimeout(int timeout) {
     timeout %= 1000;
   }
 
-  tv.tv_sec = sec;
+  tv.tv_sec  = sec;
   tv.tv_usec = msec * 1000;
 
   guard(::setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)),
@@ -124,9 +124,9 @@ msgaddr_t Socket::recvfrom() {
   // clear the receive buffers & structs
   memset(recv_str, 0, sizeof(recv_str)); // clear buffer
 
-  sockaddr_t from_addr = {0};
+  sockaddr_t from_addr  = {0};
   unsigned int from_len = sizeof(from_addr);
-  int recv_len = 0;
+  int recv_len          = 0;
 
   // block waiting to receive a packet
   recv_len = ::recvfrom(sock, recv_str, MAX_LEN, 0,
@@ -172,9 +172,9 @@ bool Socket::recvfrom(void *dst, int size, sockaddr_t &from_addr) {
   // blocking recvfrom
   memset(dst, 0, size); // clear buffer
 
-  from_addr = {0};
+  from_addr             = {0};
   unsigned int from_len = sizeof(from_addr);
-  int recv_len = 0;
+  int recv_len          = 0;
   // int flags = MSG_DONTWAIT; // nonblocking - sends signal you must catch
   const int flags = 0;
 
@@ -212,7 +212,7 @@ void Socket::setsockopt(int level, int name, int val) {
 // value?
 bool Socket::ready() {
   struct timeval tv;
-  tv.tv_sec = 0;
+  tv.tv_sec  = 0;
   tv.tv_usec = 1000;
 
   fd_set readfds;
@@ -221,9 +221,7 @@ bool Socket::ready() {
 
   // don't care about writefds and exceptfds:
   int status = select(sock + 1, &readfds, NULL, NULL, &tv);
-  if (status == 0)
-    return false;
-  else if (status < 0)
-    guard(status, "recvfrom(): ");
+  if (status == 0) return false;
+  else if (status < 0) guard(status, "recvfrom(): ");
   return true;
 }

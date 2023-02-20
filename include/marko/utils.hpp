@@ -48,8 +48,7 @@ class SignalFunc {
 public:
   SignalFunc() {}
   void enable(void (*f)(int), int signum = SIGINT) {
-    if (enabled)
-      return;
+    if (enabled) return;
 
     if (signum == SIGKILL || signum == SIGSTOP) {
       throw std::invalid_argument(

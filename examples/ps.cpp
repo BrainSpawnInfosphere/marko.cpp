@@ -55,12 +55,9 @@ int main(int argc, char *argv[]) {
   }
 
   string arg(argv[1]);
-  if (arg == "p")
-    pub();
-  else if (arg == "s")
-    sub();
-  else
-    cout << "Usage: ./ps p|s" << endl;
+  if (arg == "p") pub();
+  else if (arg == "s") sub();
+  else cout << "Usage: ./ps p|s" << endl;
 
   return 0;
 }

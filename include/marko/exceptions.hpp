@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <exception>
+#include <string>
 
 // Based on python's exception
 struct NotImplemented : public std::exception {

@@ -50,10 +50,10 @@ struct HostPort {
 
   HostPort(const std::string &addr, const int port) : addr(addr), port(port) {
     // memset(&caddr, 0, sizeof(caddr));
-    caddr = {0};
-    caddr.sin_family = AF_INET;
+    caddr                 = {0};
+    caddr.sin_family      = AF_INET;
     caddr.sin_addr.s_addr = inet_addr(addr.c_str());
-    caddr.sin_port = htons(port);
+    caddr.sin_port        = htons(port);
   }
 
   friend std::ostream &operator<<(std::ostream &os, const HostPort &d) {

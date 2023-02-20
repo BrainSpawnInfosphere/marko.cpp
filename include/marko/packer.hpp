@@ -31,19 +31,23 @@ public:
         float f = (float)va_arg(args, double);
         memcpy(&buffer.b[size], &f, f_size);
         size += f_size;
-      } else if (*fmt == 'd') {
+      }
+      else if (*fmt == 'd') {
         double f = va_arg(args, double);
         memcpy(&buffer.b[size], &f, d_size);
         size += d_size;
-      } else if (*fmt == 'c') {
+      }
+      else if (*fmt == 'c') {
         char f = (char)va_arg(args, int);
         memcpy(&buffer.b[size], &f, c_size);
         size += c_size;
-      } else if (*fmt == 'B') {
+      }
+      else if (*fmt == 'B') {
         uint8_t f = (uint8_t)va_arg(args, unsigned int);
         memcpy(&buffer.b[size], &f, B_size);
         size += B_size;
-      } else if (*fmt == 'i') {
+      }
+      else if (*fmt == 'i') {
         int f = (char)va_arg(args, int);
         memcpy(&buffer.b[size], &f, i_size);
         size += i_size;

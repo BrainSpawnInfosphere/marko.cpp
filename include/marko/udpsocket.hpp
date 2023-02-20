@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include <cstdio>
-#include <functional> // std::function
 #include "socket.hpp"
 #include "utils.hpp"
+#include <cstdio>
+#include <functional> // std::function
 #include <string>
 #include <vector>
 

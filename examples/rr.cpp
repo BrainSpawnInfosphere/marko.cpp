@@ -27,7 +27,7 @@ void request() {
 
   TRequest<data_t, response_t> r;
   data_t msg{1.1, 2};
-  msg.c[0] = 100;
+  msg.c[0]        = 100;
   response_t resp = r.request(msg, addr);
 
   printf("resp: %d\n", resp.a);
@@ -56,12 +56,9 @@ int main(int argc, char *argv[]) {
   }
 
   string arg(argv[1]);
-  if (arg == "reply")
-    reply();
-  else if (arg == "request")
-    request();
-  else
-    cout << "Usage: ./rr reply|request" << endl;
+  if (arg == "reply") reply();
+  else if (arg == "request") request();
+  else cout << "Usage: ./rr reply|request" << endl;
 
   return 0;
 }
