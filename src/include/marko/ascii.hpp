@@ -5,6 +5,7 @@
 \**************************************************/
 #pragma once
 
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -21,8 +22,29 @@ using ascii_t = std::vector<std::string>;
 class Ascii {
 public:
   Ascii(char separator = '|') : sep(separator) {}
-  ascii_t &unpack(const std::string &str); // network to host
-  std::string pack(ascii_t &v);            // host to network
+
+  ascii_t &unpack(const std::string &str) {
+    toks.clear();
+    std::stringstream ss(str);
+    std::string token;
+    try {
+      while (getline(ss, token, sep))
+        toks.push_back(token);
+    } catch (exception &e) {
+      // std::cout << e.what() << std::endl;
+      toks.clear();
+      return toks;
+    }
+    return toks;
+  }
+
+  std::string pack(ascii_t &v) {
+    std::stringstream ss;
+    ss << v[0];
+    for (int i = 1; i < v.size(); i++)
+      ss << sep << v[i];
+    return ss.str();
+  }
 
 protected:
   ascii_t toks;

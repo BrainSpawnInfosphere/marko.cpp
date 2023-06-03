@@ -3,30 +3,29 @@
 #include <string>
 #include <vector>
 
-// #include <marko/udpsocket.hpp>
-// #include <marko/utils.hpp>
 #include <marko/marko.hpp>
 
 using namespace std;
 
-string HOST{"10.0.1.116"};
+string HOST = get_host_ip();
 int PORT = 9999;
 
-typedef struct Data {
+// publish data
+struct data_t {
   double a;
   int b;
   void print() const {
     cout << "data_t " << a << " " << b << " size " << sizeof(*this) << endl;
   }
-} data_t;
+};
 
+// publisher
 void pub() {
+  sockaddr_t hp = make_sockaddr(HOST, PORT);
+  cout << "Publisher connecting to: " << HOST << ":" << PORT << endl;
 
-  HostPort hp(HOST, PORT);
-  cout << "Connecting to: " << hp << endl;
-
-  TPublisher<data_t> p;
-  p.clientaddr.push_back(hp.caddr);
+  PublisherUDP<data_t> p;
+  p.register_addr(hp);
 
   for (int i = 0; i < 20; ++i) {
     data_t d;
@@ -36,15 +35,21 @@ void pub() {
   }
 }
 
+// subscriber callback, this would process
+// recieved data from the publisher, but this
+// only prints it.
 void cb(const data_t &s) { s.print(); }
 
+// subscriber
 void sub() {
   Event e;
   e.set();
 
-  TSubscriber<data_t> s;
+  cout << "Subscriber binding to: " << HOST << ":" << PORT << endl;
+
+  SubscriberUDP<data_t> s;
   s.bind(HOST, PORT);
-  s.register_cb(cb);
+  s.register_cb(cb); // you can have many callback functions
   s.loop(e);
 }
 

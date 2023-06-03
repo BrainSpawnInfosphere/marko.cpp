@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.24.0)
-project(marko VERSION 2023.02.18.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.25.0)
+project(marko VERSION 2023.06.03.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -31,30 +31,8 @@ endif()
 
 
 # Library =====================================================================
-add_library(${PROJECT_NAME} SHARED $<TARGET_OBJECTS:objlib>)
-add_library(${PROJECT_NAME}-static STATIC $<TARGET_OBJECTS:objlib>)
-set_target_properties(${PROJECT_NAME}-static PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
-
-# if building STATIC library, an unimportant but annoying error appears about
-# no symbols
-SET(CMAKE_C_ARCHIVE_CREATE   "<CMAKE_AR> Scr <TARGET> <LINK_FLAGS> <OBJECTS>")
-SET(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> Scr <TARGET> <LINK_FLAGS> <OBJECTS>")
-SET(CMAKE_C_ARCHIVE_FINISH   "<CMAKE_RANLIB> -no_warning_for_no_symbols -c <TARGET>")
-SET(CMAKE_CXX_ARCHIVE_FINISH "<CMAKE_RANLIB> -no_warning_for_no_symbols -c <TARGET>")
-
-message(STATUS ">> ${PROJECT_SOURCE_DIR}")
-
-# makeing an object allows us to build both shared and static
-# w/o having to build library twice ... I really don't make
-# use of this here :)
-add_library(objlib OBJECT
-    src/ascii.cpp
-    src/socket.cpp
-)
-target_include_directories(objlib
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+add_library(${PROJECT_NAME} INTERFACE)
+target_include_directories(${PROJECT_NAME} INTERFACE src/include)
 
 # Examples ====================
 message(STATUS "Building ${PROJECT_NAME} examples is ${BUILD_EXAMPLES}")

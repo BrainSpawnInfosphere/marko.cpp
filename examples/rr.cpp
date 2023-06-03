@@ -2,50 +2,53 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
-// #include <marko/udpsocket.hpp>
-// #include <marko/utils.hpp>
 #include <marko/marko.hpp>
 
 using namespace std;
 
-string HOST{"10.0.1.116"};
+string HOST = get_host_ip();
 int PORT = 9999;
 
-typedef struct Data {
+// request message
+struct request_t {
   double a;
   int b;
   uint8_t c[128];
-} data_t;
+};
 
-typedef struct RESP {
+// response message
+struct response_t {
   int a;
-} response_t;
+};
 
+// requester
 void request() {
-  sockaddr_t addr = make(HOST, PORT);
+  sockaddr_t addr = make_sockaddr(HOST, PORT);
 
-  TRequest<data_t, response_t> r;
-  data_t msg{1.1, 2};
+  RequestUDP<request_t, response_t> r;
+  request_t msg{1.1, 2};
   msg.c[0]        = 100;
   response_t resp = r.request(msg, addr);
 
   printf("resp: %d\n", resp.a);
 }
 
-response_t cb(const data_t &s) {
+// response callback, this processes the
+// request message and returns a response message
+response_t cb(const request_t &s) {
   printf("cb: %f %d %d %lu\n", s.a, s.b, s.c[0], sizeof(s));
   response_t r;
   r.a = 1;
   return r;
 }
 
+// reply
 void reply() {
   Event e;
   e.set();
-  TReply<data_t, response_t> r;
+  ReplyUDP<request_t, response_t> r;
   r.bind(HOST, PORT);
-  r.register_cb(cb);
+  r.register_cb(cb); // you can have more than 1 callback
   r.loop(e);
 }
 
