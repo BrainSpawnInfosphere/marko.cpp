@@ -15,14 +15,12 @@ endif()
 
 enable_testing()
 
-add_executable(
-  test_marko
-  test_marko.cpp
-)
-target_link_libraries(
-    test_marko
+add_executable(test_marko test_marko.cpp)
+target_link_libraries(test_marko PRIVATE
+    marko
     GTest::gtest_main
 )
+# target_link_libraries(${MAIN} PRIVATE marko)
 
 include(GoogleTest)
 gtest_discover_tests(test_marko)

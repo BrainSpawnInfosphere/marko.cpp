@@ -5,11 +5,12 @@
 \**************************************************/
 #pragma once
 
-#include <exception>
-#include "sockaddr.hpp"
-#include "time.hpp"
-#include "socket.hpp"
-#include "socket_types.hpp"
+#include "ascii.hpp"
 #include "event.hpp"
 #include "pub_sub.hpp"
 #include "request_reply.hpp"
+#include "sockaddr.hpp"
+#include "socket.hpp"
+#include "socket_types.hpp"
+#include "time.hpp"
+#include <exception>

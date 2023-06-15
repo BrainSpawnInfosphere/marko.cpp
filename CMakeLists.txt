@@ -22,13 +22,12 @@ if(PROJECT_IS_TOP_LEVEL)
     message(STATUS "-------------------------------------")
 
     set(BUILD_EXAMPLES ON)
-    set(BUILD_GTESTS ON)
+    set(BUILD_TESTS ON)
 else()
     message(STATUS "-> ${PROJECT_NAME} is submodule")
     set(BUILD_EXAMPLES OFF)
     set(BUILD_GTESTS OFF)
 endif()
-
 
 # Library =====================================================================
 add_library(${PROJECT_NAME} INTERFACE)

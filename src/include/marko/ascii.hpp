@@ -8,6 +8,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <exception>
 
 using ascii_t = std::vector<std::string>;
 
@@ -30,7 +31,7 @@ public:
     try {
       while (getline(ss, token, sep))
         toks.push_back(token);
-    } catch (exception &e) {
+    } catch (std::exception &e) {
       // std::cout << e.what() << std::endl;
       toks.clear();
       return toks;

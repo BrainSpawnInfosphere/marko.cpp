@@ -1,13 +1,13 @@
 #include <cstdio>
 #include <iostream>
+#include <marko/marko.hpp>
 #include <string>
 #include <vector>
-#include <marko/marko.hpp>
 
 using namespace std;
 
 string HOST = get_host_ip();
-int PORT = 9999;
+int PORT    = 9999;
 
 // request message
 struct request_t {

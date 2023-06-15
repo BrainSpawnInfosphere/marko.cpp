@@ -8,7 +8,7 @@
 using namespace std;
 
 string HOST = get_host_ip();
-int PORT = 9999;
+int PORT    = 9999;
 
 // publish data
 struct data_t {

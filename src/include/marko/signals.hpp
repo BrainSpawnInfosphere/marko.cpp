@@ -39,7 +39,8 @@ public:
     if (signum == SIGKILL || signum == SIGSTOP) {
       // throw std::invalid_argument(
       //     "** Cannot capture signals SIGKILL or SIGSTOP **");
-      std::cout << "** Cannot capture signals SIGKILL or SIGSTOP **" << std::endl;
+      std::cout << "** Cannot capture signals SIGKILL or SIGSTOP **"
+                << std::endl;
       return -1;
     }
 

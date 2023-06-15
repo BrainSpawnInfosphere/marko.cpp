@@ -8,15 +8,14 @@
 ////////////////////////////////////////////////////////
 #pragma once
 
-
 #include "base.hpp"
-#include "event.hpp" // Event
+#include "event.hpp"  // Event
+#include "socket_types.hpp"
 #include <functional> // std::function
 #include <string>
 #include <vector>
 
-template <typename T, typename SOCKET>
-class Subscriber : public Base<SOCKET> {
+template <typename T, typename SOCKET> class Subscriber : public Base<SOCKET> {
 public:
   Subscriber() {}
   ~Subscriber() {}
@@ -47,18 +46,15 @@ public:
 
 protected:
   std::vector<SubCallback_t> callbacks; // FIXME: rename callbacks
-  bool run; // remove Event from loop()
+  bool run;                             // remove Event from loop()
 };
 
-template<typename T>
-using SubscriberUDP = Subscriber<T,UDPSocket>;
-template<typename T>
-using SubscriberUDS = Subscriber<T,UDSSocket>;
+template <typename T> using SubscriberUDP = Subscriber<T, UDPSocket>;
+template <typename T> using SubscriberUDS = Subscriber<T, UDSSocket>;
 
 ///////////////////////////////////////////////////////////////////////////
 
-template <typename T, typename SOCK>
-class Publisher : public Base<SOCK> {
+template <typename T, typename SOCK> class Publisher : public Base<SOCK> {
 public:
   Publisher() {}
   ~Publisher() {}
@@ -75,8 +71,5 @@ protected:
   std::vector<sockaddr_t> clientaddrs;
 };
 
-
-template<typename T>
-using PublisherUDP = Publisher<T,UDPSocket>;
-template<typename T>
-using PublisherUDS = Publisher<T,UDSSocket>;
+template <typename T> using PublisherUDP = Publisher<T, UDPSocket>;
+template <typename T> using PublisherUDS = Publisher<T, UDSSocket>;

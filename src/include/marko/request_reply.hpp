@@ -9,7 +9,8 @@
 #pragma once
 
 #include "base.hpp"
-#include "event.hpp" // Event
+#include "event.hpp"  // Event
+#include "socket_types.hpp"
 #include <functional> // std::function
 #include <string>
 #include <vector>
@@ -17,12 +18,14 @@
 template <typename REQ, typename REPLY, typename SOCKET>
 class Reply : public Base<SOCKET> {
 public:
-  Reply(int timeout = 5000):timeout(timeout), run(false) {}
+  Reply(int timeout = 5000) : timeout(timeout), run(false) {}
   ~Reply() {}
 
   typedef std::function<REPLY(const REQ &)> ReplyCallback_t;
 
-  inline void register_cb(ReplyCallback_t func) { callback = func; } // { cb.push_back(f); }
+  inline void register_cb(ReplyCallback_t func) {
+    callback = func;
+  } // { cb.push_back(f); }
 
   void loop(Event &event, int timeout = 5000) {
     this->sock.settimeout(timeout);
@@ -54,11 +57,10 @@ protected:
   ReplyCallback_t callback;
 };
 
-
-template<typename REQ, typename REPLY>
-using ReplyUDP = Reply<REQ,REPLY,UDPSocket>;
-template<typename REQ, typename REPLY>
-using ReplyUDS = Reply<REQ,REPLY,UDSSocket>;
+template <typename REQ, typename REPLY>
+using ReplyUDP = Reply<REQ, REPLY, UDPSocket>;
+template <typename REQ, typename REPLY>
+using ReplyUDS = Reply<REQ, REPLY, UDSSocket>;
 
 /////////////////////////////////////////////////////////////////
 
@@ -68,19 +70,18 @@ public:
   Request() {}
   ~Request() {}
 
-  const REP& request(const REQ &data, const sockaddr_t &addr) {
+  const REP &request(const REQ &data, const sockaddr_t &addr) {
     this->sock.sendto(&data, sizeof(REQ), addr);
     sockaddr_t tmp;
     this->sock.recvfrom(&(this->replyFrom), sizeof(REP), tmp);
     return replyFrom;
   }
 
-  protected:
+protected:
   REP replyFrom;
 };
 
-
-template<typename REQ, typename REPLY>
-using RequestUDP = Request<REQ,REPLY,UDPSocket>;
-template<typename REQ, typename REPLY>
-using RequestUDS = Request<REQ,REPLY,UDSSocket>;
+template <typename REQ, typename REPLY>
+using RequestUDP = Request<REQ, REPLY, UDPSocket>;
+template <typename REQ, typename REPLY>
+using RequestUDS = Request<REQ, REPLY, UDSSocket>;
