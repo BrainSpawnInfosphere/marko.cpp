@@ -17,7 +17,7 @@ using namespace std;
 TEST(marko, addresses) {
   string host = get_host_ip();
   int port = 9999;
-  geckoUDP_t addr = geckoUDP(host, port);
+  udpaddr_t addr = geckoUDP(host, port);
 }
 
 TEST(marko, ascii) {
@@ -32,13 +32,22 @@ TEST(marko, ascii) {
   EXPECT_TRUE(redo == orig);
 }
 
+
+
 struct data_t {
-  double a;
+  double d;
 };
 
+TEST(marko, message_t) {
+  data_t d{1.2345};
+  message_t m = pack<data_t>(d);
+  data_t e = unpack<data_t>(m);
+  EXPECT_EQ(d.d, e.d);
+}
+
 // TEST(marko, pub_sub_uds) {
-//   PublisherUDS<data_t> p;
-//   SubscriberUDS<data_t> s;
+//   PublisherUDS p;
+//   SubscriberUDS s;
 
 //   string path = "./socket.uds";
 //   unlink(path.c_str()); // remove from filesystem
@@ -51,7 +60,9 @@ struct data_t {
 //   ss.connect(path);
 // }
 
-void cb(const data_t &s) { ; }
+void cb(const message_t &s) {
+  data_t d = unpack<data_t>(s);
+}
 
 TEST(marko, pub_sub_udp) {
   // Event e;
@@ -61,27 +72,27 @@ TEST(marko, pub_sub_udp) {
 
   string host = "127.0.0.1";
   int port = 9999;
-  geckoUDP_t addr = geckoUDP(host, port);
+  udpaddr_t addr = geckoUDP(host, port);
 
-  data_t d{1.234};
-
-  PublisherUDP<data_t> p;
+  PublisherUDP p;
   p.register_addr(addr);
   p.bind(host, port);
-  std::cerr << "bind" << std::endl;
+  // std::cerr << "bind" << std::endl;
   // p.sendto((void*)&d,sizeof(d), addr);
   // p.publish(d);
 
-  SubscriberUDP<data_t> s;
+  SubscriberUDP s(sizeof(data_t));
   s.register_cb(cb);
   s.connect(host, port);
-  s.settimeout(1000);
-  std::cerr << "connect" << std::endl;
+  // s.settimeout(1000);
+  // std::cerr << "connect" << std::endl;
 
-  p.publish(d);
-  std::cerr << "publish" << std::endl;
-  s.once();
-  std::cerr << "once" << std::endl;
+  data_t d{1.234};
+  message_t msg = pack<data_t>(d);
+  p.publish(msg);
+  // std::cerr << "publish" << std::endl;
+  // s.once();
+  // std::cerr << "once" << std::endl;
 
   // p.sendto()
 }

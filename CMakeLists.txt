@@ -22,7 +22,7 @@ if(PROJECT_IS_TOP_LEVEL)
     message(STATUS "-------------------------------------")
 
     set(BUILD_EXAMPLES ON)
-    set(BUILD_TESTS OFF)
+    set(BUILD_TESTS ON)
 else()
     message(STATUS "-> ${PROJECT_NAME} is submodule")
     set(BUILD_EXAMPLES OFF)
