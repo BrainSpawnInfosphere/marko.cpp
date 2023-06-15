@@ -8,68 +8,70 @@
 ////////////////////////////////////////////////////////
 #pragma once
 
-#include "base.hpp"
-#include "event.hpp"  // Event
+// #include "base.hpp"
+#include "event.hpp"
+#include "socket.hpp"
 #include "socket_types.hpp"
+#include "signals.hpp"
+#include "sockaddr.hpp"
 #include <functional> // std::function
 #include <string>
 #include <vector>
 
-template <typename T, typename SOCKET> class Subscriber : public Base<SOCKET> {
+class Subscriber : public SocketUDP {
 public:
-  Subscriber() {}
+  Subscriber(size_t data_size): data_size(data_size) {}
   ~Subscriber() {}
 
-  typedef std::function<void(const T &)> SubCallback_t;
+  typedef std::function<void(const message_t &)> SubCallback_t;
 
-  void register_cb(SubCallback_t func) { callbacks.push_back(func); }
+  void register_cb(SubCallback_t func) {
+    callbacks.push_back(func);
+  }
 
-  void loop(Event &event, int timeout = 5000) {
-    run = true;
-    this->sock.settimeout(timeout);
-    while (event.is_set()) {
-      once();
-    }
+  void loop() {
+    while (true) once();
+  }
+
+  void loop(Event &event) {
+    while (event.is_set()) once();
   }
 
   void once() {
-    T s;
-    sockaddr_t from_addr;
-    int size = this->sock.recvfrom(&s, sizeof(s), from_addr);
-    if (size <= 0) return;
-    for (const SubCallback_t &callback : this->callbacks) {
-      callback(s);
-    }
+    message_t msg = recv(data_size);
+    if (msg.size() == 0) return;
+    for (const SubCallback_t &callback: this->callbacks) callback(msg);
   }
-
-  void stop() { run = false; }
 
 protected:
   std::vector<SubCallback_t> callbacks; // FIXME: rename callbacks
-  bool run;                             // remove Event from loop()
+  size_t data_size;
 };
 
-template <typename T> using SubscriberUDP = Subscriber<T, UDPSocket>;
-template <typename T> using SubscriberUDS = Subscriber<T, UDSSocket>;
+typedef Subscriber SubscriberUDP;
+// template <typename T> using SubscriberUDP = Subscriber<T>;
+// template <typename T> using SubscriberUDP = Subscriber<T>;
+// template <typename T> using SubscriberUDS = Subscriber<T, UDSSocket>;
 
 ///////////////////////////////////////////////////////////////////////////
 
-template <typename T, typename SOCK> class Publisher : public Base<SOCK> {
+// template <typename SOCKADDR> class Publisher : public Socket<SOCKADDR>
+class Publisher : public SocketUDP {
 public:
   Publisher() {}
   ~Publisher() {}
 
-  void publish(const T &data) {
-    for (const sockaddr_t &addr : clientaddrs) {
-      this->sock.sendto(&data, sizeof(T), addr);
-    }
+  void publish(const message_t &data) {
+    for (const udpaddr_t &addr : clientaddrs) sendto(data, addr);
   }
 
-  inline void register_addr(const sockaddr_t &c) { clientaddrs.push_back(c); }
+  inline void register_addr(const udpaddr_t &c) { clientaddrs.push_back(c); }
 
 protected:
-  std::vector<sockaddr_t> clientaddrs;
+  std::vector<udpaddr_t> clientaddrs;
 };
 
-template <typename T> using PublisherUDP = Publisher<T, UDPSocket>;
-template <typename T> using PublisherUDS = Publisher<T, UDSSocket>;
+typedef Publisher PublisherUDP;
+// template <typename T> using PublisherUDP = Publisher<T>;
+// template <typename T> using PublisherUDP = Publisher<T, udpaddr_t>;
+// template <typename T> using PublisherUDS = Publisher<T, UDSSocket>;

@@ -2,13 +2,14 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
-
+#include <array>
 #include <marko/marko.hpp>
 
 using namespace std;
 
 string HOST = get_host_ip();
-int PORT    = 9999;
+constexpr int PORT    = 3000;
+constexpr int MAX_LOOP = 10;
 
 // publish data
 struct data_t {
@@ -19,38 +20,42 @@ struct data_t {
   }
 };
 
+
 // publisher
 void pub() {
-  sockaddr_t hp = make_sockaddr(HOST, PORT);
-  cout << "Publisher connecting to: " << HOST << ":" << PORT << endl;
+  udpaddr_t addr = SocketUDP::getsockaddr(HOST,PORT);
+  // cout << "Publisher connecting to: " << get_ip_port(addr) << endl;
 
-  PublisherUDP<data_t> p;
-  p.register_addr(hp);
+  PublisherUDP p;
+  p.connect(HOST, PORT);
+  p.register_addr(addr);
 
-  for (int i = 0; i < 20; ++i) {
+  for (int i = 0; i < MAX_LOOP; ++i) {
     data_t d;
     d.a = 1.2;
     d.b = i;
-    p.publish(d);
+    message_t m = pack(d);
+    p.publish(m);
   }
 }
 
 // subscriber callback, this would process
 // recieved data from the publisher, but this
 // only prints it.
-void cb(const data_t &s) { s.print(); }
+void cb(const message_t &m) {
+  data_t s = unpack<data_t>(m);
+  s.print();
+}
 
 // subscriber
 void sub() {
-  Event e;
-  e.set();
-
-  cout << "Subscriber binding to: " << HOST << ":" << PORT << endl;
-
-  SubscriberUDP<data_t> s;
+  SubscriberUDP s(sizeof(data_t));
   s.bind(HOST, PORT);
+  // s.settimeout(5000);
   s.register_cb(cb); // you can have many callback functions
-  s.loop(e);
+  // s.register_cb(cb);
+  for (int i=0; i < MAX_LOOP; ++i) s.once();
+  // cout << "sub done" << endl;
 }
 
 int main(int argc, char *argv[]) {

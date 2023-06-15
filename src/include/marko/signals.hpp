@@ -6,6 +6,7 @@
 #pragma once
 
 #include <signal.h>
+#include <unistd.h> // getpid()
 
 /*
 https://stackoverflow.com/questions/1641182/how-can-i-catch-a-ctrl-c-event
@@ -34,13 +35,13 @@ class SignalFunc {
 public:
   SignalFunc() {}
   int enable(void (*f)(int), int signum = SIGINT) {
-    if (enabled) return;
+    if (enabled) return 0;
 
     if (signum == SIGKILL || signum == SIGSTOP) {
-      // throw std::invalid_argument(
-      //     "** Cannot capture signals SIGKILL or SIGSTOP **");
-      std::cout << "** Cannot capture signals SIGKILL or SIGSTOP **"
-                << std::endl;
+      throw std::invalid_argument(
+          "** Cannot capture signals SIGKILL or SIGSTOP **");
+      // std::cout << "** Cannot capture signals SIGKILL or SIGSTOP **"
+      //           << std::endl;
       return -1;
     }
 
@@ -58,3 +59,35 @@ public:
 protected:
   bool enabled{false};
 };
+
+
+// class SignalTerm {
+//   public:
+//   SignalTerm() {
+//     int signum = SIGINT;
+//     flag.test_and_set();
+
+//     // if (signum == SIGKILL || signum == SIGSTOP) {
+//     //   throw std::invalid_argument(
+//     //       "** Cannot capture signals SIGKILL or SIGSTOP **");
+//     //   // std::cout << "** Cannot capture signals SIGKILL or SIGSTOP **"
+//     //   //           << std::endl;
+//     //   // return -1;
+//     // }
+
+//     struct sigaction sigIntHandler;
+//     sigIntHandler.sa_handler = SignalTerm::clear;
+//     sigemptyset(&sigIntHandler.sa_mask);
+//     sigIntHandler.sa_flags = 0;
+
+//     sigaction(signum, &sigIntHandler, NULL);
+//   }
+
+//   static void clear(int a) { flag.clear(); std::cout<<"bye"<<std::endl;}
+//   bool is_set() { return flag.test(); }
+
+// protected:
+//   static std::atomic_flag flag;
+// };
+
+// std::atomic_flag SignalTerm::flag;

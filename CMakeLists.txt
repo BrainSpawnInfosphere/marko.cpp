@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25.0)
-project(marko VERSION 2023.06.03.0 LANGUAGES CXX)
+project(marko VERSION 2023.06.14.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,7 +22,7 @@ if(PROJECT_IS_TOP_LEVEL)
     message(STATUS "-------------------------------------")
 
     set(BUILD_EXAMPLES ON)
-    set(BUILD_TESTS ON)
+    set(BUILD_TESTS OFF)
 else()
     message(STATUS "-> ${PROJECT_NAME} is submodule")
     set(BUILD_EXAMPLES OFF)

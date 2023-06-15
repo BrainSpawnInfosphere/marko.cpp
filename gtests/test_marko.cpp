@@ -15,9 +15,9 @@ using namespace std;
 // }
 
 TEST(marko, addresses) {
-  string HOST = get_host_ip();
-  int PORT = 9999;
-  sockaddr_t addr = make_sockaddr(HOST, PORT);
+  string host = get_host_ip();
+  int port = 9999;
+  geckoUDP_t addr = geckoUDP(host, port);
 }
 
 TEST(marko, ascii) {
@@ -51,24 +51,44 @@ struct data_t {
 //   ss.connect(path);
 // }
 
+void cb(const data_t &s) { ; }
+
 TEST(marko, pub_sub_udp) {
-  PublisherUDP<data_t> p;
-  SubscriberUDP<data_t> s;
+  // Event e;
+
+  // PublisherUDP<data_t> p;
+  // SubscriberUDP<data_t> s;
 
   string host = "127.0.0.1";
   int port = 9999;
+  geckoUDP_t addr = geckoUDP(host, port);
 
-  PublisherUDP<data_t> pp;
-  pp.bind(host, port);
+  data_t d{1.234};
 
-  SubscriberUDP<data_t> ss;
-  // ss.bind(path);
-  ss.connect(host, port);
+  PublisherUDP<data_t> p;
+  p.register_addr(addr);
+  p.bind(host, port);
+  std::cerr << "bind" << std::endl;
+  // p.sendto((void*)&d,sizeof(d), addr);
+  // p.publish(d);
+
+  SubscriberUDP<data_t> s;
+  s.register_cb(cb);
+  s.connect(host, port);
+  s.settimeout(1000);
+  std::cerr << "connect" << std::endl;
+
+  p.publish(d);
+  std::cerr << "publish" << std::endl;
+  s.once();
+  std::cerr << "once" << std::endl;
+
+  // p.sendto()
 }
 
-TEST(marko, request_reply) {
-  ReplyUDP<data_t,data_t> p;
-  RequestUDP<data_t,data_t> s;
-  ReplyUDS<data_t,data_t> pp;
-  RequestUDS<data_t,data_t> ss;
-}
+// TEST(marko, request_reply) {
+//   ReplyUDP<data_t,data_t> p;
+//   RequestUDP<data_t,data_t> s;
+//   ReplyUDS<data_t,data_t> pp;
+//   RequestUDS<data_t,data_t> ss;
+// }

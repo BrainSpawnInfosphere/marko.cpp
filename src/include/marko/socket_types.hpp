@@ -12,60 +12,87 @@
  * Simple UDP socket base class for query/response architecture. Not really
  * useful by itself. Look at classes that build upon it.
  */
-class UDPSocket : public Socket {
-public:
-  UDPSocket() : Socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP) {}
-  // UDP bind
-  // INADDR_ANY - bind to all available interfaces
-  // port=0 let's the OS pick a port number
-  void bind(const std::string &saddr, int port) {
-    // allow multiple sockets to re-use the same address and port
-    setsockopt(SOL_SOCKET, SO_REUSEPORT, 1);
-    setsockopt(SOL_SOCKET, SO_REUSEADDR, 1);
+// class UDPSocket : public Socket {
+// public:
+//   // UDPSocket() : Socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP) {}
+//   UDPSocket() {
+//     // socket_fd = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+//     // guard(socket_fd, "Socket() constructor failed");
+//     // std::cout << "socket fd: " << this->socket_fd << std::endl;
+//   }
+//   ~UDPSocket() {}
 
-    sockaddr_t aaddr = make_sockaddr(saddr, port);
-    int err = ::bind(socket_fd, (struct sockaddr *)&aaddr, sizeof(aaddr));
-    guard(err, "bind() failed for (" + saddr + ":" + std::to_string(port) + ")");
-  }
-  void connect(const std::string &HOST, int PORT) {
-    // Create a sockaddr_in structure for UDP
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(PORT);
-    addr.sin_addr.s_addr = inet_addr(HOST.c_str());
+//   // UDP bind
+//   // INADDR_ANY - bind to all available interfaces
+//   // port=0 let's the OS pick a port number
+//   // void bind(const std::string &ip, int port) {
 
-    // Connect to the remote host
-    int err = ::connect(socket_fd, (struct sockaddr *)&addr, sizeof(addr));
-    guard(err, "connect() failed for (" + HOST + ":" + std::to_string(PORT) + ")");
-  }
-};
+//   //   socket_fd = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+//   //   guard(socket_fd, "Socket() constructor failed");
+//   //   // std::cout << "socket fd: " << this->socket_fd << std::endl;
 
-// https://github.com/troydhanson/network/blob/master/unixdomain/01.basic/srv.c
-// https://gist.github.com/Phaiax/ae7d1229e6f078457864dae712c51ae0
-class UDSSocket : public Socket {
-public:
-  UDSSocket() : Socket(AF_UNIX, SOCK_STREAM, 0) {}
+//   //   // allow multiple sockets to re-use the same address and port
+//   //   setsockopt(SOL_SOCKET, SO_REUSEPORT, 1);
+//   //   setsockopt(SOL_SOCKET, SO_REUSEADDR, 1);
 
-  // UDS bind
-  void bind(const std::string &path) {
-    struct sockaddr_un addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    strcpy(addr.sun_path, path.c_str());
+//   //   geckoUDP_t addr = geckoUDP(ip, port);
 
-    int err = ::bind(socket_fd, (struct sockaddr *)&addr, sizeof(addr));
-    guard(err, "bind() failed for UDS " + path);
-  }
+//   //   int err = ::bind(socket_fd, (struct sockaddr *)&addr, sizeof(addr));
+//   //   guard(err, "bind() failed for (" + ip + ":" + std::to_string(port) + ")");
+//   //   // std::cout << "err: " << err << std::endl;
 
-  void connect(const std::string &path) {
-    // struct sockaddr_un addr;
-    // memset(&addr, 0, sizeof(addr));
-    // addr.sun_family = AF_UNIX;
-    // strcpy(addr.sun_path, path.c_str());
-    geckoUDS_t addr = geckoUDS(path);
+//   //   std::cout << "Binding to: " << ip << ":" << port << std::endl;
+//   //   std::cout << "socket fd: " << this->socket_fd << std::endl;
+//   // }
 
-    int err = ::connect(socket_fd, (struct sockaddr *)&addr, sizeof(addr));
-    guard(err, "connect() failed for UDS " + path);
-  }
-};
+//   // void connect(const std::string &ip, int port) {
+//   //   socket_fd = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+//   //   guard(socket_fd, "Socket() constructor failed");
+//   //   // std::cout << "socket fd: " << this->socket_fd << std::endl;
+
+//   //   geckoUDP_t addr = geckoUDP(ip, port);
+
+//   //   int err = ::connect(socket_fd, (struct sockaddr *)&addr, sizeof(addr));
+//   //   guard(err, "connect() failed for (" + ip + ":" + std::to_string(port) + ")");
+//   //   // std::cout << "err: " << err << std::endl;
+
+//   //   std::cout << "Connecting to: " << ip << ":" << port << std::endl;
+//   //   std::cout << "socket fd: " << this->socket_fd << std::endl;
+//   // }
+// };
+
+
+
+// // https://github.com/troydhanson/network/blob/master/unixdomain/01.basic/srv.c
+// // https://gist.github.com/Phaiax/ae7d1229e6f078457864dae712c51ae0
+// class UDSSocket : public Socket {
+// public:
+//   // UDSSocket() : Socket(AF_UNIX, SOCK_STREAM, 0) {}
+//   UDSSocket() {}
+
+//   // UDS bind
+//   void bind(const std::string &path) {
+//     socket_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+//     guard(socket_fd, "Socket() constructor failed");
+
+//     // struct sockaddr_un addr;
+//     // memset(&addr, 0, sizeof(addr));
+//     // addr.sun_family = AF_UNIX;
+//     // strcpy(addr.sun_path, path.c_str());
+
+//     geckoUDS_t addr = geckoUDS(path);
+
+//     int err = ::bind(socket_fd, (struct sockaddr *)&addr, sizeof(addr));
+//     guard(err, "bind() failed for UDS " + path);
+//   }
+
+//   void connect(const std::string &path) {
+//     socket_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+//     guard(socket_fd, "Socket() constructor failed");
+
+//     geckoUDS_t addr = geckoUDS(path);
+
+//     int err = ::connect(socket_fd, (struct sockaddr *)&addr, sizeof(addr));
+//     guard(err, "connect() failed for UDS " + path);
+//   }
+// };
