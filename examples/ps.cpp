@@ -23,7 +23,7 @@ struct data_t {
 
 // publisher
 void pub() {
-  udpaddr_t addr = SocketUDP::getsockaddr(HOST,PORT);
+  udpaddr_t addr = make_sockaddr(HOST,PORT);
   // cout << "Publisher connecting to: " << get_ip_port(addr) << endl;
 
   PublisherUDP p;

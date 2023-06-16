@@ -22,7 +22,7 @@ using unixaddr_t = struct sockaddr_un;
 // typedef struct sockaddr_un geckoUDS_t; // unix socket
 // struct geckoUDP: public struct sockaddr_in {};
 
-unixaddr_t sockaddr(const std::string &path) {
+unixaddr_t make_sockaddr(const std::string &path) {
   unixaddr_t addr;
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
@@ -30,7 +30,7 @@ unixaddr_t sockaddr(const std::string &path) {
   return std::move(addr);
 }
 
-udpaddr_t geckoUDP(const std::string &ip, int port) {
+udpaddr_t make_sockaddr(const std::string &ip, int port) {
   udpaddr_t addr;
   memset(&addr, 0, sizeof(addr));
   addr.sin_family      = AF_INET;
@@ -40,14 +40,14 @@ udpaddr_t geckoUDP(const std::string &ip, int port) {
 }
 
 // for server to bind to any address
-udpaddr_t geckoUDP(int port) {
-  udpaddr_t addr;
-  memset(&addr, 0, sizeof(addr));
-  addr.sin_family      = AF_INET;
-  addr.sin_addr.s_addr = INADDR_ANY;
-  addr.sin_port        = htons(port);
-  return std::move(addr);
-}
+// udpaddr_t make_sockaddr(int port) {
+//   udpaddr_t addr;
+//   memset(&addr, 0, sizeof(addr));
+//   addr.sin_family      = AF_INET;
+//   addr.sin_addr.s_addr = INADDR_ANY;
+//   addr.sin_port        = htons(port);
+//   return std::move(addr);
+// }
 
 // https://beej.us/guide/bgnet/html/multi/gethostbynameman.html
 // PLEASE NOTE: these two functions are superseded by getaddrinfo() and
@@ -78,7 +78,7 @@ std::string get_host_ip() {
 
   // you need to connect to get your IP address, even
   // a failed connect works
-  udpaddr_t addr  = geckoUDP("9.9.9.9", 9999);
+  udpaddr_t addr  = make_sockaddr("9.9.9.9", 9999);
   ::connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
 
   // Get the local address

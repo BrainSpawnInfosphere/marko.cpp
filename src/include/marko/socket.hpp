@@ -218,17 +218,21 @@ class SocketUDP: public Socket {
       setsockopt(SOL_SOCKET, SO_REUSEADDR, 0);
     }
 
-    udpaddr_t addr = getsockaddr(port);
+    udpaddr_t addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family      = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY; // all interfaces
+    addr.sin_port        = htons(port);
 
     int err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
     guard(err, "bind() failed: ");
 
-    info("Bind");
+    // info("Bind");
   }
 
   void connect(const std::string &ip, int port) {
     get_socket(AF_INET, SOCK_DGRAM, 0);
-    info("Connect");
+    // info("Connect");
   }
 
   message_t recvfrom(size_t msg_size, udpaddr_t *from_addr, const int flags=0) {
@@ -272,21 +276,21 @@ class SocketUDP: public Socket {
     return num;
   }
 
-  static udpaddr_t getsockaddr(const int port) {
-    udpaddr_t addr = {0};
-    addr.sin_family      = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY;
-    addr.sin_port        = htons(port);
-    return std::move(addr);
-  }
+  // static udpaddr_t getsockaddr(const int port) {
+  //   udpaddr_t addr = {0};
+  //   addr.sin_family      = AF_INET;
+  //   addr.sin_addr.s_addr = INADDR_ANY;
+  //   addr.sin_port        = htons(port);
+  //   return std::move(addr);
+  // }
 
-  static udpaddr_t getsockaddr(const std::string& ip, int port) {
-    udpaddr_t addr = {0};
-    addr.sin_family      = AF_INET;
-    addr.sin_addr.s_addr = inet_addr(ip.c_str());
-    addr.sin_port        = htons(port);
-    return std::move(addr);
-  }
+  // static udpaddr_t getsockaddr(const std::string& ip, int port) {
+  //   udpaddr_t addr = {0};
+  //   addr.sin_family      = AF_INET;
+  //   addr.sin_addr.s_addr = inet_addr(ip.c_str());
+  //   addr.sin_port        = htons(port);
+  //   return std::move(addr);
+  // }
 
   void info(const std::string& s){
     // https://man7.org/linux/man-pages/man7/ip.7.html

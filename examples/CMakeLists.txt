@@ -1,6 +1,6 @@
 
 LIST(APPEND APPS
-    # rr
+    rr
     simple
     msg
     ps

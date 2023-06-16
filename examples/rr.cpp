@@ -8,12 +8,12 @@ using namespace std;
 
 string HOST = get_host_ip();
 int PORT    = 9999;
+constexpr int LOOP = 5;
 
 // request message
 struct request_t {
   double a;
   int b;
-  uint8_t c[128];
 };
 
 // response message
@@ -23,26 +23,25 @@ struct response_t {
 
 // requester
 void request() {
-  geckoUDP_t addr = geckoUDP(HOST, PORT);
+  udpaddr_t addr = make_sockaddr(HOST, PORT);
   cout << "Request connecting to: " << HOST << ":" << PORT << endl;
 
   RequestUDP<request_t, response_t> r;
   r.connect(HOST, PORT);
-  request_t msg{1.1, 2};
-  msg.c[0]        = 100;
-  response_t resp = r.request(msg, addr);
 
-  printf("resp: %d\n", resp.a);
+  for (int i=0; i<LOOP; ++i) {
+    request_t msg{1.2345*double(i), i};
+    response_t resp = r.request(msg, addr);
+    printf("resp: %d\n", resp.a);
+  }
 }
 
 // response callback, this processes the
 // request message and returns a response message
 response_t cb(const request_t &s) {
-  static int a = 0;
-  a += 1;
-  printf("cb: %f %d %d %lu\n", s.a, s.b, s.c[0], sizeof(s));
+  printf("cb: %f %d %lu\n", s.a, s.b, sizeof(s));
   response_t r;
-  r.a = a;
+  r.a = s.b;
   return r;
 }
 
@@ -53,7 +52,7 @@ void reply() {
   r.bind(HOST, PORT);
   // r.settimeout(1000);
   r.register_cb(cb); // you can have more than 1 callback
-  r.loop();
+  for (int i=0; i<LOOP; ++i) r.once();
 }
 
 int main(int argc, char *argv[]) {
