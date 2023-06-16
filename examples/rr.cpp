@@ -23,9 +23,11 @@ struct response_t {
 
 // requester
 void request() {
-  sockaddr_t addr = make_sockaddr(HOST, PORT);
+  geckoUDP_t addr = geckoUDP(HOST, PORT);
+  cout << "Request connecting to: " << HOST << ":" << PORT << endl;
 
   RequestUDP<request_t, response_t> r;
+  r.connect(HOST, PORT);
   request_t msg{1.1, 2};
   msg.c[0]        = 100;
   response_t resp = r.request(msg, addr);
@@ -36,20 +38,22 @@ void request() {
 // response callback, this processes the
 // request message and returns a response message
 response_t cb(const request_t &s) {
+  static int a = 0;
+  a += 1;
   printf("cb: %f %d %d %lu\n", s.a, s.b, s.c[0], sizeof(s));
   response_t r;
-  r.a = 1;
+  r.a = a;
   return r;
 }
 
 // reply
 void reply() {
-  Event e;
-  e.set();
+  cout << "Reply binding to: " << HOST << ":" << PORT << endl;
   ReplyUDP<request_t, response_t> r;
   r.bind(HOST, PORT);
+  // r.settimeout(1000);
   r.register_cb(cb); // you can have more than 1 callback
-  r.loop(e);
+  r.loop();
 }
 
 int main(int argc, char *argv[]) {

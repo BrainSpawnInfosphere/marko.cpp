@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ascii.hpp"
+#include "message.hpp"
 #include "event.hpp"
 #include "pub_sub.hpp"
 #include "request_reply.hpp"
