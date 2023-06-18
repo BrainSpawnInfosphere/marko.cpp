@@ -26,7 +26,6 @@ void request() {
   udpaddr_t addr = make_sockaddr(HOST, PORT);
   cout << "Request connecting to: " << get_ip_port(addr) << endl;
 
-  // RequestUDP<request_t, response_t> r;
   RequestUDP r(sizeof(response_t));
   r.connect();
 
@@ -44,18 +43,20 @@ void request() {
 // request message and returns a response message
 message_t cb(const message_t &m) {
   request_t s = unpack<request_t>(m);
-  // printf("cb: %f %d %lu\n", s.a, s.b, sizeof(s));
   cout << "cb: " << s.a << " " << s.b << " " << sizeof(s) <<endl;
   response_t r{s.b};
   message_t resp = pack<response_t>(r);
+
+  // print_msg(resp);
+  // std::cout << "in cb: " << m << std::endl;
+
   return std::move(resp);
 }
 
 // reply
 void reply() {
   cout << "Reply binding to: " << HOST << ":" << PORT << endl;
-  // ReplyUDP<request_t, response_t> r;
-  ReplyUDP r(sizeof(response_t));
+  ReplyUDP r(sizeof(request_t));
   r.bind(HOST, PORT);
   // r.settimeout(1000);
   r.register_cb(cb); // you can have more than 1 callback

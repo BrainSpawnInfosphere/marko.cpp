@@ -35,10 +35,14 @@ public:
     message_t m = SOCKET::recvfrom(msg_size, &from_addr);
 
     if (m.size() == 0) return;
-    if (m.size() != msg_size) std::cout << "CRAP" << std::endl;
+    if (m.size() != msg_size) return;
+
+    // print_msg(m);
+    // std::cout << "from recvfrom: " << m << std::endl;
+
     message_t r = callback(m);
 
-    std::cout << "Reply::once: " << get_ip_port(from_addr) << std::endl;
+    // std::cout << "Reply::once: " << get_ip_port(from_addr) << std::endl;
     SOCKET::sendto(r, from_addr);
   }
 
@@ -60,11 +64,11 @@ public:
   const message_t request(const message_t &msg, const SOCKADDR &addr) {
     // std::cout << "request" << std::endl;
     SOCKET::sendto(msg, addr);
-    std::cout << "Request::sendto:  " << get_ip_port(addr)  << std::endl;
+    // std::cout << "Request::sendto:  " << get_ip_port(addr)  << std::endl;
 
     SOCKADDR from_addr = {0};
     message_t rep = SOCKET::recvfrom(msg_size, &from_addr);
-    std::cout << "Request::recvfrom:  " << get_ip_port(from_addr)  << std::endl;
+    // std::cout << "Request::recvfrom:  " << get_ip_port(from_addr)  << std::endl;
     return std::move(rep);
   }
 

@@ -23,7 +23,7 @@ class SocketUDP: public Socket {
       setsockopt(SOL_SOCKET, SO_REUSEADDR, 0);
     }
 
-    setsockopt(IPPROTO_IP, IP_MULTICAST_LOOP, 0); // disable loopback?
+    // setsockopt(IPPROTO_IP, IP_MULTICAST_LOOP, 0); // disable loopback?
 
     udpaddr_t addr;
     memset(&addr, 0, sizeof(addr));
@@ -34,12 +34,12 @@ class SocketUDP: public Socket {
     int err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
     guard(err, "SocketUDP::bind() failed: ");
 
-    info("Bind");
+    // info("Bind");
   }
 
   void connect() {
     makeSocket(AF_INET, SOCK_DGRAM, 0);
-    info("Connect");
+    // info("Connect");
   }
 
   void listen() {
@@ -81,7 +81,7 @@ class SocketUDP: public Socket {
   }
 
   int sendto(const message_t& msg, const udpaddr_t &addr, int flags=0) {
-    std::cout << "sendto" << std::endl;
+    // std::cout << "sendto" << std::endl;
     int num = ::sendto(
       socket_fd,
       msg.data(), msg.size(),
@@ -89,7 +89,7 @@ class SocketUDP: public Socket {
       (struct sockaddr *)&addr, sizeof(addr));
 
     guard(msg.size() != num, "sendto() sent incorrect number of bytes");
-    std::cout << "sendto done" << std::endl;
+    // std::cout << "sendto done" << std::endl;
     return num;
   }
 
