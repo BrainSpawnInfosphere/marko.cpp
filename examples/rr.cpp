@@ -7,7 +7,7 @@
 using namespace std;
 
 string HOST = get_host_ip();
-int PORT    = 9999;
+constexpr int PORT = 9999;
 constexpr int LOOP = 5;
 
 // request message
@@ -24,31 +24,38 @@ struct response_t {
 // requester
 void request() {
   udpaddr_t addr = make_sockaddr(HOST, PORT);
-  cout << "Request connecting to: " << HOST << ":" << PORT << endl;
+  cout << "Request connecting to: " << get_ip_port(addr) << endl;
 
-  RequestUDP<request_t, response_t> r;
-  r.connect(HOST, PORT);
+  // RequestUDP<request_t, response_t> r;
+  RequestUDP r(sizeof(response_t));
+  r.connect();
 
   for (int i=0; i<LOOP; ++i) {
-    request_t msg{1.2345*double(i), i};
-    response_t resp = r.request(msg, addr);
-    printf("resp: %d\n", resp.a);
+    request_t m{1.2345*double(i), i};
+    message_t msg = pack<request_t>(m);
+    message_t rp = r.request(msg, addr);
+    response_t resp = unpack<response_t>(rp);
+    // printf("resp: %d\n", resp.a);
+    cout << "resp: " << resp.a << endl;
   }
 }
 
 // response callback, this processes the
 // request message and returns a response message
-response_t cb(const request_t &s) {
-  printf("cb: %f %d %lu\n", s.a, s.b, sizeof(s));
-  response_t r;
-  r.a = s.b;
-  return r;
+message_t cb(const message_t &m) {
+  request_t s = unpack<request_t>(m);
+  // printf("cb: %f %d %lu\n", s.a, s.b, sizeof(s));
+  cout << "cb: " << s.a << " " << s.b << " " << sizeof(s) <<endl;
+  response_t r{s.b};
+  message_t resp = pack<response_t>(r);
+  return std::move(resp);
 }
 
 // reply
 void reply() {
   cout << "Reply binding to: " << HOST << ":" << PORT << endl;
-  ReplyUDP<request_t, response_t> r;
+  // ReplyUDP<request_t, response_t> r;
+  ReplyUDP r(sizeof(response_t));
   r.bind(HOST, PORT);
   // r.settimeout(1000);
   r.register_cb(cb); // you can have more than 1 callback

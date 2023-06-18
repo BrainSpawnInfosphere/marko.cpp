@@ -12,7 +12,7 @@
 #include <string>
 #include <sys/ioctl.h>
 #include <sys/socket.h> // socket(), bind(), recvfrom(), ...
-#include <sys/un.h>     // UDS
+// #include <sys/un.h>     // UDS
 #include <netinet/in.h> // for address structs
 #include <unistd.h>     // for close()
 #include <map>
@@ -101,6 +101,12 @@ std::vector<SoOpts> socketOptsSOL {
 };
 
 
+// class SS {
+//   public:
+
+//   void getSockAddr(const std::string&)
+// };
+
 class Socket {
   protected:
   typedef int socket_fd_t;
@@ -117,25 +123,21 @@ public:
     }
   }
 
-  void settimeout(uint32_t sec, uint32_t msec) {
+  void settimeout(long timeout_msec) {
+    long sec  = 0;
+    long msec = 0;
+
+    if (timeout_msec >= 1000) {
+      sec = (long)timeout_msec / 1000;
+      timeout_msec %= 1000;
+    }
+
     struct timeval tv;
     tv.tv_sec  = sec;
     tv.tv_usec = msec * 1000;
 
     int err = ::setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
     guard(err, "settimeout(): ");
-  }
-
-  void settimeout(long timeout) {
-    long sec  = 0;
-    long msec = 0;
-
-    if (timeout >= 1000) {
-      sec = (long)timeout / 1000;
-      timeout %= 1000;
-    }
-
-   settimeout(sec, msec);
   }
 
   void setnonblocking() {
@@ -163,10 +165,9 @@ public:
   }
 
 protected:
-  socket_fd_t get_socket(int family, int type, int proto) {
+  void makeSocket(int family, int type, int proto) {
     socket_fd = ::socket(family, type, proto);
-    guard(socket_fd, "get_socket() failed: ");
-    return 0;
+    guard(socket_fd, "Socket::makeSocket() failed: ");
   }
 
   void info(const std::string& s){
@@ -200,152 +201,152 @@ protected:
 ////////////////////////////////////////////////////////////////////////////////////////
 
 
-class SocketUDP: public Socket {
-  public:
-  SocketUDP() {}
-  ~SocketUDP() {}
+// class SocketUDP: public Socket {
+//   public:
+//   SocketUDP() {}
+//   ~SocketUDP() {}
 
-  void bind(const std::string &ip, int port, bool multipleBind=false) {
-    get_socket(AF_INET, SOCK_DGRAM, 0);
+//   void bind(const std::string &ip, int port, bool multipleBind=false) {
+//     get_socket(AF_INET, SOCK_DGRAM, 0);
 
-    // allow multiple sockets to re-use the same address and port
-    if (multipleBind) {
-      setsockopt(SOL_SOCKET, SO_REUSEPORT, 1);
-      setsockopt(SOL_SOCKET, SO_REUSEADDR, 1);
-    }
-    else {
-      setsockopt(SOL_SOCKET, SO_REUSEPORT, 0);
-      setsockopt(SOL_SOCKET, SO_REUSEADDR, 0);
-    }
+//     // allow multiple sockets to re-use the same address and port
+//     if (multipleBind) {
+//       setsockopt(SOL_SOCKET, SO_REUSEPORT, 1);
+//       setsockopt(SOL_SOCKET, SO_REUSEADDR, 1);
+//     }
+//     else {
+//       setsockopt(SOL_SOCKET, SO_REUSEPORT, 0);
+//       setsockopt(SOL_SOCKET, SO_REUSEADDR, 0);
+//     }
 
-    udpaddr_t addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family      = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY; // all interfaces
-    addr.sin_port        = htons(port);
+//     udpaddr_t addr;
+//     memset(&addr, 0, sizeof(addr));
+//     addr.sin_family      = AF_INET;
+//     addr.sin_addr.s_addr = INADDR_ANY; // all interfaces
+//     addr.sin_port        = htons(port);
 
-    int err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
-    guard(err, "bind() failed: ");
+//     int err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
+//     guard(err, "bind() failed: ");
 
-    // info("Bind");
-  }
+//     // info("Bind");
+//   }
 
-  void connect(const std::string &ip, int port) {
-    get_socket(AF_INET, SOCK_DGRAM, 0);
-    // info("Connect");
-  }
+//   void connect(const std::string &ip, int port) {
+//     get_socket(AF_INET, SOCK_DGRAM, 0);
+//     // info("Connect");
+//   }
 
-  message_t recvfrom(size_t msg_size, udpaddr_t *from_addr, const int flags=0) {
-    message_t dst(msg_size);
-    int num = 0;
+//   message_t recvfrom(size_t msg_size, udpaddr_t *from_addr, const int flags=0) {
+//     message_t dst(msg_size);
+//     int num = 0;
 
-    if (from_addr != NULL) {
-      socklen_t from_len;
-      from_len = sizeof(*from_addr);
-      memset(from_addr, 0, from_len);
-      num = ::recvfrom(socket_fd, dst.data(), msg_size, flags,
-        (struct sockaddr *)from_addr, &from_len);
-    }
-    else
-      num = ::recvfrom(socket_fd, dst.data(), msg_size, flags, NULL, NULL);
+//     if (from_addr != NULL) {
+//       socklen_t from_len;
+//       from_len = sizeof(*from_addr);
+//       memset(from_addr, 0, from_len);
+//       num = ::recvfrom(socket_fd, dst.data(), msg_size, flags,
+//         (struct sockaddr *)from_addr, &from_len);
+//     }
+//     else
+//       num = ::recvfrom(socket_fd, dst.data(), msg_size, flags, NULL, NULL);
 
-    // std::cout << "recvfrom done msg: " << dst.capacity() << " " << dst.size() << std::endl;
+//     // std::cout << "recvfrom done msg: " << dst.capacity() << " " << dst.size() << std::endl;
 
-    // FIXME: add msg_size != dst.size() ???
-    // timeout gives -1, so set size=0
-    if (num == SOCKET_TIMEOUT || num == 0) dst.clear();
+//     // FIXME: add msg_size != dst.size() ???
+//     // timeout gives -1, so set size=0
+//     if (num == SOCKET_TIMEOUT || num == 0) dst.clear();
 
-    return std::move(dst);
-  }
+//     return std::move(dst);
+//   }
 
-  message_t recv(size_t msg_size, const int flags=0) {
-    message_t m = recvfrom(msg_size,NULL,flags);
-    return std::move(m);
-  }
+//   message_t recv(size_t msg_size, const int flags=0) {
+//     message_t m = recvfrom(msg_size,NULL,flags);
+//     return std::move(m);
+//   }
 
-  int sendto(const message_t& msg, const udpaddr_t &addr, int flags=0) {
-    int num = ::sendto(
-      socket_fd,
-      msg.data(),
-      msg.size(),
-      flags,
-      (struct sockaddr *)&addr,
-      sizeof(addr));
+//   int sendto(const message_t& msg, const udpaddr_t &addr, int flags=0) {
+//     int num = ::sendto(
+//       socket_fd,
+//       msg.data(),
+//       msg.size(),
+//       flags,
+//       (struct sockaddr *)&addr,
+//       sizeof(addr));
 
-    guard(msg.size() != num, "sendto() sent incorrect number of bytes");
-    return num;
-  }
+//     guard(msg.size() != num, "sendto() sent incorrect number of bytes");
+//     return num;
+//   }
 
-  // static udpaddr_t getsockaddr(const int port) {
-  //   udpaddr_t addr = {0};
-  //   addr.sin_family      = AF_INET;
-  //   addr.sin_addr.s_addr = INADDR_ANY;
-  //   addr.sin_port        = htons(port);
-  //   return std::move(addr);
-  // }
+//   // static udpaddr_t getsockaddr(const int port) {
+//   //   udpaddr_t addr = {0};
+//   //   addr.sin_family      = AF_INET;
+//   //   addr.sin_addr.s_addr = INADDR_ANY;
+//   //   addr.sin_port        = htons(port);
+//   //   return std::move(addr);
+//   // }
 
-  // static udpaddr_t getsockaddr(const std::string& ip, int port) {
-  //   udpaddr_t addr = {0};
-  //   addr.sin_family      = AF_INET;
-  //   addr.sin_addr.s_addr = inet_addr(ip.c_str());
-  //   addr.sin_port        = htons(port);
-  //   return std::move(addr);
-  // }
+//   // static udpaddr_t getsockaddr(const std::string& ip, int port) {
+//   //   udpaddr_t addr = {0};
+//   //   addr.sin_family      = AF_INET;
+//   //   addr.sin_addr.s_addr = inet_addr(ip.c_str());
+//   //   addr.sin_port        = htons(port);
+//   //   return std::move(addr);
+//   // }
 
-  void info(const std::string& s){
-    // https://man7.org/linux/man-pages/man7/ip.7.html
-    // https://man7.org/linux/man-pages/man7/tcp.7.html
-    // https://man7.org/linux/man-pages/man7/udp.7.html
-    u_char val;
-    struct in_addr addr = {0};
-    socklen_t ss = sizeof(addr);
-    socklen_t size = sizeof(val);
-    char ip[32] = {0};
+//   void info(const std::string& s){
+//     // https://man7.org/linux/man-pages/man7/ip.7.html
+//     // https://man7.org/linux/man-pages/man7/tcp.7.html
+//     // https://man7.org/linux/man-pages/man7/udp.7.html
+//     u_char val;
+//     struct in_addr addr = {0};
+//     socklen_t ss = sizeof(addr);
+//     socklen_t size = sizeof(val);
+//     char ip[32] = {0};
 
-    Socket::info(s);
+//     Socket::info(s);
 
-    printf(" [IP Protocol]-----------------\n");
-    getsockopt(socket_fd, IPPROTO_IP, IP_MULTICAST_IF, &addr, &ss);
-    ::inet_ntop(AF_INET, &(addr.s_addr), ip, sizeof(ip));
-    printf("  multicast IF: %s\n", ip);
+//     printf(" [IP Protocol]-----------------\n");
+//     getsockopt(socket_fd, IPPROTO_IP, IP_MULTICAST_IF, &addr, &ss);
+//     ::inet_ntop(AF_INET, &(addr.s_addr), ip, sizeof(ip));
+//     printf("  multicast IF: %s\n", ip);
 
-    getsockopt(socket_fd, IPPROTO_IP, IP_MULTICAST_LOOP, &val, &size);
-    printf("  multicast loopback: %s\n", val ? "enabled" : "disabled");
+//     getsockopt(socket_fd, IPPROTO_IP, IP_MULTICAST_LOOP, &val, &size);
+//     printf("  multicast loopback: %s\n", val ? "enabled" : "disabled");
 
-    getsockopt(socket_fd, IPPROTO_IP, IP_MULTICAST_TTL, &val, &size);
-    printf("  multicast TTL: %d\n", val);
+//     getsockopt(socket_fd, IPPROTO_IP, IP_MULTICAST_TTL, &val, &size);
+//     printf("  multicast TTL: %d\n", val);
 
-    getsockopt(socket_fd, IPPROTO_IP, IP_TTL, &val, &size);
-    printf("  IP TTL: %d\n", val);
-  }
-};
+//     getsockopt(socket_fd, IPPROTO_IP, IP_TTL, &val, &size);
+//     printf("  IP TTL: %d\n", val);
+//   }
+// };
 
-class SocketUDS: public Socket {
-  public:
-  SocketUDS() {}
-  ~SocketUDS() {}
+// class SocketUDS: public Socket {
+//   public:
+//   SocketUDS() {}
+//   ~SocketUDS() {}
 
-  void bind(const std::string &path, bool multipleBind=false) {}
-  message_t recvfrom(size_t msg_size, unixaddr_t *from_addr, const int flags=0) {
-    message_t m;
-    return std::move(m);
-  }
-  message_t recv(size_t msg_size, const int flags=0) {
-    message_t m;
-    return std::move(m);
-  }
-  int sendto(const message_t& msg, const unixaddr_t &addr, int flags=0) {
-    return 0;
-  }
+//   void bind(const std::string &path, bool multipleBind=false) {}
+//   message_t recvfrom(size_t msg_size, unixaddr_t *from_addr, const int flags=0) {
+//     message_t m;
+//     return std::move(m);
+//   }
+//   message_t recv(size_t msg_size, const int flags=0) {
+//     message_t m;
+//     return std::move(m);
+//   }
+//   int sendto(const message_t& msg, const unixaddr_t &addr, int flags=0) {
+//     return 0;
+//   }
 
-  static unixaddr_t getsockaddr(const std::string& path) {
-    unixaddr_t addr = {0};
-    // addr.sin_family      = AF_INET;
-    // addr.sin_addr.s_addr = inet_addr(ip.c_str());
-    // addr.sin_port        = htons(port);
-    return std::move(addr);
-  }
-};
+//   static unixaddr_t getsockaddr(const std::string& path) {
+//     unixaddr_t addr = {0};
+//     // addr.sin_family      = AF_INET;
+//     // addr.sin_addr.s_addr = inet_addr(ip.c_str());
+//     // addr.sin_port        = htons(port);
+//     return std::move(addr);
+//   }
+// };
 
 
 

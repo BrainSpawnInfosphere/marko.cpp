@@ -18,27 +18,21 @@
 #include <string>
 #include <vector>
 
-class Subscriber : public SocketUDP {
+template <typename SOCKET>
+class Subscriber : public SOCKET {
 public:
   Subscriber(size_t data_size): data_size(data_size) {}
   ~Subscriber() {}
 
   typedef std::function<void(const message_t &)> SubCallback_t;
 
-  void register_cb(SubCallback_t func) {
-    callbacks.push_back(func);
-  }
+  void register_cb(SubCallback_t func) { callbacks.push_back(func); }
 
-  void loop() {
-    while (true) once();
-  }
-
-  void loop(Event &event) {
-    while (event.is_set()) once();
-  }
+  void loop() { while (true) once(); }
+  void loop(Event &event) { while (event.is_set()) once(); }
 
   void once() {
-    message_t msg = recv(data_size);
+    message_t msg = SOCKET::recv(data_size);
     if (msg.size() == 0) return;
     for (const SubCallback_t &callback: this->callbacks) callback(msg);
   }
@@ -48,7 +42,8 @@ protected:
   size_t data_size;
 };
 
-typedef Subscriber SubscriberUDP;
+using SubscriberUDP = Subscriber<SocketUDP>;
+// typedef Subscriber SubscriberUDP;
 // template <typename T> using SubscriberUDP = Subscriber<T>;
 // template <typename T> using SubscriberUDP = Subscriber<T>;
 // template <typename T> using SubscriberUDS = Subscriber<T, UDSSocket>;
@@ -56,22 +51,23 @@ typedef Subscriber SubscriberUDP;
 ///////////////////////////////////////////////////////////////////////////
 
 // template <typename SOCKADDR> class Publisher : public Socket<SOCKADDR>
-class Publisher : public SocketUDP {
+template <typename SOCKET, typename SOCKADDR>
+class Publisher : public SOCKET {
 public:
   Publisher() {}
   ~Publisher() {}
 
   void publish(const message_t &data) {
-    for (const udpaddr_t &addr : clientaddrs) sendto(data, addr);
+    for (const SOCKADDR &addr : clientaddrs) SOCKET::sendto(data, addr);
   }
 
-  inline void register_addr(const udpaddr_t &c) { clientaddrs.push_back(c); }
+  inline void register_addr(const SOCKADDR &c) { clientaddrs.push_back(c); }
 
 protected:
-  std::vector<udpaddr_t> clientaddrs;
+  std::vector<SOCKADDR> clientaddrs;
 };
 
-typedef Publisher PublisherUDP;
-// template <typename T> using PublisherUDP = Publisher<T>;
+// typedef Publisher PublisherUDP;
+using PublisherUDP = Publisher<SocketUDP, udpaddr_t>;
 // template <typename T> using PublisherUDP = Publisher<T, udpaddr_t>;
 // template <typename T> using PublisherUDS = Publisher<T, UDSSocket>;

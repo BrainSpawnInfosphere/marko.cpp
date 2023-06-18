@@ -27,7 +27,7 @@ void pub() {
   // cout << "Publisher connecting to: " << get_ip_port(addr) << endl;
 
   PublisherUDP p;
-  p.connect(HOST, PORT);
+  p.connect();
   p.register_addr(addr);
 
   for (int i = 0; i < MAX_LOOP; ++i) {
