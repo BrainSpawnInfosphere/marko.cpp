@@ -49,7 +49,8 @@ request_t rr = unpack<request_t>(msg);
 
 ## Alternate
 
-- https://github.com/nanomsg/nng
+- [ZeroMQ](https://zeromq.org/)
+- [nanomsg-next-gen](https://github.com/nanomsg/nng)
 
 ## Todo
 
