@@ -1,0 +1,26 @@
+
+#include "socket_udp.hpp"
+
+
+class SocketBC: public SocketUDP {
+  udpaddr_t bc_addr;
+
+  public:
+  SocketBC(uint16_t port) {
+    // std::cout << "sock: " << socket_fd << std::endl;
+    setsockopt(SOL_SOCKET, SO_BROADCAST, 1);
+    setsockopt(IPPROTO_IP, IP_MULTICAST_LOOP, 1);
+    // setsockopt(SOL_SOCKET, SO_BROADCAST, 1);
+    bc_addr = make_sockaddr(INADDR_BROADCAST, port);
+    // std::cout << "bc_bind: " << get_ip_port(bc_addr) << std::endl;
+  }
+  ~SocketBC() {}
+
+  void bind(uint16_t port) = delete;
+  void bind(uint32_t inaddr, uint16_t port) = delete;
+  void connect() = delete;
+
+  inline int cast(const message_t& msg){
+    return SocketUDP::sendto(msg, bc_addr);
+  }
+};

@@ -15,7 +15,10 @@ endif()
 
 enable_testing()
 
-add_executable(test_marko test_marko.cpp)
+add_executable(test_marko
+    test_bc.cpp
+    test_marko.cpp)
+
 target_link_libraries(test_marko PRIVATE
     marko
     GTest::gtest_main

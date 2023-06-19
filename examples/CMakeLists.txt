@@ -5,6 +5,7 @@ LIST(APPEND APPS
     msg
     ps
     regex
+    bc
 )
 
 foreach(MAIN ${APPS})

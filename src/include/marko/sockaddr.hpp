@@ -14,44 +14,43 @@
 #include <unistd.h>     // gethostname()
 #include <netdb.h>      // gethostbyname
 
+using sockaddr_in_t = struct sockaddr_in;
 using udpaddr_t = struct sockaddr_in;
 using tcpaddr_t = struct sockaddr_in;
-using unixaddr_t = struct sockaddr_un;
-// using geckoUDP_t = struct sockaddr_in;
-// typedef struct sockaddr_in geckoUDP_t; // internet socket
-// typedef struct sockaddr_un geckoUDS_t; // unix socket
-// struct geckoUDP: public struct sockaddr_in {};
+using udsaddr_t = struct sockaddr_un;
 
-unixaddr_t make_sockaddr(const std::string &path) {
-  unixaddr_t addr;
+static
+udsaddr_t make_sockaddr(const std::string &path) {
+  udsaddr_t addr;
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
   strcpy(addr.sun_path, path.c_str());
   return std::move(addr);
 }
 
-udpaddr_t make_sockaddr(const std::string &ip, int port) {
-  udpaddr_t addr;
-  memset(&addr, 0, sizeof(addr));
+static
+udpaddr_t make_sockaddr(const std::string &ip, uint16_t port) {
+  udpaddr_t addr = {0};
   addr.sin_family      = AF_INET;
   addr.sin_addr.s_addr = inet_addr(ip.c_str());
   addr.sin_port        = htons(port);
   return std::move(addr);
 }
 
-// for server to bind to any address
-// udpaddr_t make_sockaddr(int port) {
-//   udpaddr_t addr;
-//   memset(&addr, 0, sizeof(addr));
-//   addr.sin_family      = AF_INET;
-//   addr.sin_addr.s_addr = INADDR_ANY;
-//   addr.sin_port        = htons(port);
-//   return std::move(addr);
-// }
+// inaddr: INADDR_ANY or INADDR_BROADCAST
+static
+udpaddr_t make_sockaddr(uint32_t inaddr, uint16_t port) {
+  udpaddr_t addr = {0};
+  addr.sin_family      = AF_INET;
+  addr.sin_addr.s_addr = inaddr; // htonl(inaddr); // htonl???
+  addr.sin_port        = htons(port);
+  return std::move(addr);
+}
 
 // https://beej.us/guide/bgnet/html/multi/gethostbynameman.html
 // PLEASE NOTE: these two functions are superseded by getaddrinfo() and
 // getnameinfo()! In particular, gethostbyname() doesn't work well with IPv6.
+static
 std::string gethostname() {
   char name[256] = {0};
   // guard(::gethostname(name, 256), "gethostname() failed");
@@ -59,6 +58,7 @@ std::string gethostname() {
   return std::string(name);
 }
 
+static
 std::string getHostbyName(const std::string& name) {
   struct hostent* host = ::gethostbyname(name.c_str());
   if (host == nullptr) return std::string("");
@@ -66,6 +66,7 @@ std::string getHostbyName(const std::string& name) {
   return hostname;
 }
 
+static
 std::string get_host_ip() {
   int sockfd;
   socklen_t addrlen;
@@ -100,6 +101,7 @@ std::string get_host_ip() {
   return address;
 }
 
+static
 std::string get_ip_port(const udpaddr_t &addr) {
   char ip[32] = {0};
   ::inet_ntop(AF_INET, &(addr.sin_addr),ip,sizeof(ip));

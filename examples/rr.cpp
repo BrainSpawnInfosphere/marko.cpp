@@ -7,17 +7,17 @@
 using namespace std;
 
 string HOST = get_host_ip();
-constexpr int PORT = 9999;
+constexpr uint16_t PORT = 9999;
 constexpr int LOOP = 5;
 
 // request message
-struct request_t {
+struct __attribute__((packed)) request_t {
   double a;
   int b;
 };
 
 // response message
-struct response_t {
+struct __attribute__((packed)) response_t {
   int a;
 };
 
@@ -27,14 +27,17 @@ void request() {
   cout << "Request connecting to: " << get_ip_port(addr) << endl;
 
   RequestUDP r(sizeof(response_t));
-  r.connect();
+  // r.connect();
+
+
+  SocketInfo si(r.getSocketFD());
+  si.info("Connect", SocketInfo::UDP);
 
   for (int i=0; i<LOOP; ++i) {
     request_t m{1.2345*double(i), i};
     message_t msg = pack<request_t>(m);
     message_t rp = r.request(msg, addr);
     response_t resp = unpack<response_t>(rp);
-    // printf("resp: %d\n", resp.a);
     cout << "resp: " << resp.a << endl;
   }
 }
@@ -44,11 +47,9 @@ void request() {
 message_t cb(const message_t &m) {
   request_t s = unpack<request_t>(m);
   cout << "cb: " << s.a << " " << s.b << " " << sizeof(s) <<endl;
+
   response_t r{s.b};
   message_t resp = pack<response_t>(r);
-
-  // print_msg(resp);
-  // std::cout << "in cb: " << m << std::endl;
 
   return std::move(resp);
 }
@@ -57,8 +58,12 @@ message_t cb(const message_t &m) {
 void reply() {
   cout << "Reply binding to: " << HOST << ":" << PORT << endl;
   ReplyUDP r(sizeof(request_t));
-  r.bind(HOST, PORT);
+  r.bind(PORT);
   // r.settimeout(1000);
+
+  SocketInfo si(r.getSocketFD());
+  si.info("Bind", SocketInfo::UDP);
+
   r.register_cb(cb); // you can have more than 1 callback
   for (int i=0; i<LOOP; ++i) r.once();
 }

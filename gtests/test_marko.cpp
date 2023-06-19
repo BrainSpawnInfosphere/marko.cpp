@@ -52,7 +52,7 @@ void callback(const message_t& m) {
 void sub_thread() {
   // cout << "start sub" << endl;
   SubscriberUDP s(sizeof(data_t));
-  s.bind(host, port);
+  s.bind(port);
   s.register_cb( callback );
   for (int i=0; i < LOOP; ++i) {
     s.once();
@@ -64,7 +64,7 @@ void pub_thread() {
   // cout << "start pub" << endl;
   PublisherUDP p;
   p.register_addr(addr);
-  p.connect(host, port);
+  // p.connect(host, port);
   for (int i=0; i < LOOP; ++i) {
     message_t m = pack<data_t>(test_data[i]);
     p.publish(m);

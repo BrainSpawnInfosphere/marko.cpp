@@ -7,48 +7,17 @@
 
 class SocketUDP: public Socket {
   public:
-  SocketUDP() {}
+  SocketUDP() { makeSocket(AF_INET, SOCK_DGRAM, 0); }
   ~SocketUDP() {}
 
-  void bind(const std::string &ip, int port, bool multipleBind=false) {
-    makeSocket(AF_INET, SOCK_DGRAM, 0);
+  inline void bind(uint16_t port) {
+    bind(INADDR_ANY, port);
+  }
 
-    // allow multiple sockets to re-use the same address and port
-    if (multipleBind) {
-      setsockopt(SOL_SOCKET, SO_REUSEPORT, 1);
-      setsockopt(SOL_SOCKET, SO_REUSEADDR, 1);
-    }
-    else {
-      setsockopt(SOL_SOCKET, SO_REUSEPORT, 0);
-      setsockopt(SOL_SOCKET, SO_REUSEADDR, 0);
-    }
-
-    // setsockopt(IPPROTO_IP, IP_MULTICAST_LOOP, 0); // disable loopback?
-
-    udpaddr_t addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family      = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY; // all interfaces
-    addr.sin_port        = htons(port);
-
+  void bind(uint32_t inaddr, uint16_t port) {
+    udpaddr_t addr = make_sockaddr(inaddr, port);
     int err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
     guard(err, "SocketUDP::bind() failed: ");
-
-    // info("Bind");
-  }
-
-  void connect() {
-    makeSocket(AF_INET, SOCK_DGRAM, 0);
-    // info("Connect");
-  }
-
-  void listen() {
-    int err = ::listen(socket_fd, 5);
-    guard(err, "SocketUDP::listen error: ");
-  }
-
-  void accept() {
-
   }
 
   message_t recvfrom(size_t msg_size, udpaddr_t *from_addr, const int flags=0) {
@@ -91,48 +60,5 @@ class SocketUDP: public Socket {
     guard(msg.size() != num, "sendto() sent incorrect number of bytes");
     // std::cout << "sendto done" << std::endl;
     return num;
-  }
-
-  // static udpaddr_t getsockaddr(const int port) {
-  //   udpaddr_t addr = {0};
-  //   addr.sin_family      = AF_INET;
-  //   addr.sin_addr.s_addr = INADDR_ANY;
-  //   addr.sin_port        = htons(port);
-  //   return std::move(addr);
-  // }
-
-  // static udpaddr_t getsockaddr(const std::string& ip, int port) {
-  //   udpaddr_t addr = {0};
-  //   addr.sin_family      = AF_INET;
-  //   addr.sin_addr.s_addr = inet_addr(ip.c_str());
-  //   addr.sin_port        = htons(port);
-  //   return std::move(addr);
-  // }
-
-  void info(const std::string& s){
-    // https://man7.org/linux/man-pages/man7/ip.7.html
-    // https://man7.org/linux/man-pages/man7/tcp.7.html
-    // https://man7.org/linux/man-pages/man7/udp.7.html
-    u_char val;
-    struct in_addr addr = {0};
-    socklen_t ss = sizeof(addr);
-    socklen_t size = sizeof(val);
-    char ip[32] = {0};
-
-    Socket::info(s);
-
-    printf(" [IP Protocol]-----------------\n");
-    getsockopt(socket_fd, IPPROTO_IP, IP_MULTICAST_IF, &addr, &ss);
-    ::inet_ntop(AF_INET, &(addr.s_addr), ip, sizeof(ip));
-    printf("  multicast IF: %s\n", ip);
-
-    getsockopt(socket_fd, IPPROTO_IP, IP_MULTICAST_LOOP, &val, &size);
-    printf("  multicast loopback: %s\n", val ? "enabled" : "disabled");
-
-    getsockopt(socket_fd, IPPROTO_IP, IP_MULTICAST_TTL, &val, &size);
-    printf("  multicast TTL: %d\n", val);
-
-    getsockopt(socket_fd, IPPROTO_IP, IP_TTL, &val, &size);
-    printf("  IP TTL: %d\n", val);
   }
 };

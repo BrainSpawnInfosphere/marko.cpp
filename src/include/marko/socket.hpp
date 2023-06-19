@@ -5,6 +5,7 @@
 \**************************************************/
 #pragma once
 
+#include "time.hpp"
 #include "sockaddr.hpp"
 #include "message.hpp"
 #include <errno.h> // errno
@@ -15,7 +16,7 @@
 // #include <sys/un.h>     // UDS
 #include <netinet/in.h> // for address structs
 #include <unistd.h>     // for close()
-#include <map>
+// #include <map>
 
 extern int errno; // don't like this global value
 
@@ -61,51 +62,45 @@ constexpr int SOCKET_ERR = -1;
 constexpr int SOCKET_TIMEOUT = -1;
 constexpr int SOCKET_OK = 0;
 
-std::map<int,std::string> socketTypes {
-  {SOCK_DGRAM, "UDP"},
-  {SOCK_RAW, "RAW"},
-  {SOCK_STREAM, "STREAM"}
-};
-
-enum dataTypes {
-  Int,
-  Bool,
-  Type,
-  Timeval
-};
-
-struct SoOpts {
-  int val;
-  std::string description;
-  dataTypes type;
-};
-
-std::vector<SoOpts> socketOptsSOL {
-  {SO_TYPE, "socket type", dataTypes::Type},
-  {SO_ACCEPTCONN, "Accepting connections", dataTypes::Bool}, // int
-  {SO_BROADCAST, "Broadcast messages supported", dataTypes::Bool}, // int
-  // SO_DEBUG, Debugging information is being recorded,
-  {SO_DONTROUTE, "Bypass normal routing", dataTypes::Bool},
-  {SO_ERROR, "Socket error status", dataTypes::Bool}, // int
-  {SO_KEEPALIVE, "Connections are kept alive with periodic messages", dataTypes::Bool}, // int
-  // {SO_LINGER, "Socket lingers on close"}, // linger struct
-  {SO_OOBINLINE, "Out-of-band data is transmitted in line", dataTypes::Bool},
-  // {SO_RCVTIMEO, "receive timeout"}, // timeval
-  {SO_REUSEADDR, "SO_REUSEADDR", dataTypes::Bool},
-  {SO_REUSEPORT, "SO_REUSEPORT", dataTypes::Bool},
-  {SO_RCVBUF, "Receive buffer size", dataTypes::Int},
-  {SO_RCVLOWAT, "receive low water mark", dataTypes::Int},
-  {SO_SNDBUF, "Send buffer size", dataTypes::Int},
-  {SO_SNDLOWAT, "send low water mark", dataTypes::Int},
-  // {SO_SNDTIMEO, "send timeout"}, // timeval
-};
-
-
-// class SS {
-//   public:
-
-//   void getSockAddr(const std::string&)
+// std::map<int,std::string> socketTypes {
+//   {SOCK_DGRAM, "UDP"},
+//   {SOCK_RAW, "RAW"},
+//   {SOCK_STREAM, "STREAM"}
 // };
+
+// enum dataTypes {
+//   Int,
+//   Bool,
+//   Type,
+//   Timeval
+// };
+
+// struct SoOpts {
+//   int val;
+//   std::string description;
+//   dataTypes type;
+// };
+
+// std::vector<SoOpts> socketOptsSOL {
+//   {SO_TYPE, "socket type", dataTypes::Type},
+//   {SO_ACCEPTCONN, "Accepting connections", dataTypes::Bool}, // int
+//   {SO_BROADCAST, "Broadcast messages supported", dataTypes::Bool}, // int
+//   // SO_DEBUG, Debugging information is being recorded,
+//   {SO_DONTROUTE, "Bypass normal routing", dataTypes::Bool},
+//   {SO_ERROR, "Socket error status", dataTypes::Bool}, // int
+//   {SO_KEEPALIVE, "Connections are kept alive with periodic messages", dataTypes::Bool}, // int
+//   // {SO_LINGER, "Socket lingers on close"}, // linger struct
+//   {SO_OOBINLINE, "Out-of-band data is transmitted in line", dataTypes::Bool},
+//   // {SO_RCVTIMEO, "receive timeout"}, // timeval
+//   {SO_REUSEADDR, "SO_REUSEADDR", dataTypes::Bool},
+//   {SO_REUSEPORT, "SO_REUSEPORT", dataTypes::Bool},
+//   {SO_RCVBUF, "Receive buffer size", dataTypes::Int},
+//   {SO_RCVLOWAT, "receive low water mark", dataTypes::Int},
+//   {SO_SNDBUF, "Send buffer size", dataTypes::Int},
+//   {SO_SNDLOWAT, "send low water mark", dataTypes::Int},
+//   // {SO_SNDTIMEO, "send timeout"}, // timeval
+// };
+
 
 class Socket {
   protected:
@@ -123,18 +118,10 @@ public:
     }
   }
 
+  socket_fd_t getSocketFD() { return socket_fd; }
+
   void settimeout(long timeout_msec) {
-    long sec  = 0;
-    long msec = 0;
-
-    if (timeout_msec >= 1000) {
-      sec = (long)timeout_msec / 1000;
-      timeout_msec %= 1000;
-    }
-
-    struct timeval tv;
-    tv.tv_sec  = sec;
-    tv.tv_usec = msec * 1000;
+    timeval_t tv = get_time(timeout_msec);
 
     int err = ::setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
     guard(err, "settimeout(): ");
@@ -164,30 +151,55 @@ public:
     return get_ip_port(addr);
   }
 
+  // bool available(long msec=1){
+  bool available(){
+    timeval_t tv{0,1000}; // 1 msec (1000 usec)
+    fd_set readfds;
+
+    FD_ZERO(&readfds);
+    FD_SET(socket_fd, &readfds);
+
+    // select searchs up to not including socket+1
+    // don't care about writefds and exceptfds:
+    int err = select(socket_fd+1, &readfds, NULL, NULL, &tv);
+    guard(err, "Socket::available select issue");
+
+    if (FD_ISSET(socket_fd, &readfds)) return true;
+    return false;
+  }
+
+  bool availableForWrite(){
+    timeval_t tv{0,1000}; // 1 msec (1000 usec)
+    fd_set writefds;
+
+    FD_ZERO(&writefds);
+    FD_SET(socket_fd, &writefds);
+
+    // select searchs up to not including socket+1
+    // don't care about readfds and exceptfds:
+    int err = select(socket_fd+1, NULL, &writefds, NULL, &tv);
+    guard(err, "Socket::availableForWrite select issue");
+
+    if (FD_ISSET(socket_fd, &writefds)) return true;
+    return false;
+  }
+
+  void reuseSocket(bool enable) {
+    // allow multiple sockets to re-use the same address and port
+    if (enable) {
+      setsockopt(SOL_SOCKET, SO_REUSEPORT, 1);
+      setsockopt(SOL_SOCKET, SO_REUSEADDR, 1);
+    }
+    else {
+      setsockopt(SOL_SOCKET, SO_REUSEPORT, 0);
+      setsockopt(SOL_SOCKET, SO_REUSEADDR, 0);
+    }
+  }
+
 protected:
   void makeSocket(int family, int type, int proto) {
     socket_fd = ::socket(family, type, proto);
     guard(socket_fd, "Socket::makeSocket() failed: ");
-  }
-
-  void info(const std::string& s){
-    u_char val;
-    socklen_t size = sizeof(val);
-
-    printf("[%s Socket] =====================================\n", s.c_str());
-    printf("  bind/connect to: %s\n", getsockname().c_str());
-    printf("  file descriptor: %d\n", socket_fd);
-    printf(" [Socket Layer]-----------------\n");
-
-    for (const auto& m : socketOptsSOL) {
-      getsockopt(socket_fd, SOL_SOCKET, m.val, &val, &size);
-      if (m.type == dataTypes::Int)
-        printf("  %s: %d\n", m.description.c_str(), int(val));
-      else if (m.type == dataTypes::Bool)
-        printf("  %s: %s\n", m.description.c_str(), val ? "true" : "false");
-      else if (m.type == dataTypes::Type)
-        printf("  %s: %s\n", m.description.c_str(), socketTypes[val].c_str());
-    }
   }
 
   inline void guard(int err, const std::string &msg) {

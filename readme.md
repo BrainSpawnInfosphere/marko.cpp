@@ -12,11 +12,10 @@ or broadcast to send/receive a message.
 - `Socket` modelled after python socket module
     - UDP and UDS
     - blocking/non-blocking
-    - `recvfrom()` has timeout option
 - `Publisher/Subscriber/Reply/Request`
-    - template for `struct`s on `send()` and `recvfrom()`
     - one way: `Publisher` -> `Subscriber`
     - bi-directional: `Reply` <-> `Request`
+    - all messaging uses `message_t` for data
 
 ## Usage
 
@@ -27,78 +26,26 @@ mkdir build
 cd build
 cmake ..
 ```
-## Template Examples
 
-```c++
-#include <iostream>
-#include <stdio.h>
-#include <string>
-#include <vector>
-#include <marko/marko.hpp>
+## Messsages
 
-using namespace std;
+Message are just `struct`s that are packed to remove padding. You want
+them to be **fixed length** though. Then they are put into `message_t`
+which are really just `std::vector<uint8_t>` for transmitting.
 
-string HOST{"10.0.1.116"};
-int PORT = 9999;
+```c
+struct __attribute__((packed)) request_t {
+  double a; // 8B
+  int b;    // 4B
+};
 
-// request message
-typedef struct Data {
-    double a;
-    int b;
-    uint8_t c[128];
-} data_t;
-
-// resply message
-typedef struct RESP {
-    int a;
-} response_t;
-
-
-void request(){
-    sockaddr_t addr = make(HOST,PORT);
-
-    // create message
-    data_t msg{1.1,2};
-    msg.c[0] = 100;
-
-    TRequest<data_t,response_t> r;
-    response_t resp = r.request(msg, addr);
-
-    cout << "Response: " << resp.a << endl;
-}
-
-// callback function, would realistically do much more, but just
-// a demo
-response_t cb(const data_t& s){
-    cout << "cb got: "<< s.a << " " << s.b << " " << s.c[0] << " "<< sizeof(s) << endl;
-
-    // create message to return
-    response_t r;
-    r.a = 1;
-    return r;
-}
-
-void reply(){
-    TReply<data_t,response_t> r(HOST,PORT);
-    r.register_cb(cb);
-    r.loop();
-}
-
-int main(int argc, char *argv[]){
-    // check args
-    if (argc != 2) {
-        cout << "Usage: ./rr reply|request" << endl;
-        return 1;
-    }
-
-    string arg(argv[1]);
-    if (arg == "reply") reply();
-    else if (arg == "request") request();
-    else cout << "Usage: ./rr reply|request" << endl;
-
-    return 0;
-}
+request_t r{1.234,22};
+sizeof(r); // 12B
+message_t msg = pack<request_t>(r);
+sizeof(msg); // 12B
+request_t rr = unpack<request_t>(msg);
 ```
+
 
 ## Alternate
 
@@ -107,7 +54,6 @@ int main(int argc, char *argv[]){
 ## Todo
 
 - [ ] Include Unix Domain Sockets in pub/sub/reply/request
-- [ ] Remove non-template functions and `recvbuffer[]` in `Socket`
 
 # MIT License
 

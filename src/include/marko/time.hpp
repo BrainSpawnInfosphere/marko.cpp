@@ -21,3 +21,21 @@ inline void sleep(int sec) {
 }
 
 } // namespace marko
+
+typedef struct timeval timeval_t;
+
+static
+timeval_t get_time(const long timeout_msec) {
+  // long sec  = 0;
+  // long msec = 0;
+
+  // if (timeout_msec >= 1000) {
+  //   sec = timeout_msec / 1000;
+  //   msec = timeout_msec % 1000;
+  // }
+
+  timeval_t tv;
+  tv.tv_sec  = long(timeout_msec / 1000);
+  tv.tv_usec = (timeout_msec - tv.tv_sec*1000) % 1000;
+  return std::move(tv);
+}

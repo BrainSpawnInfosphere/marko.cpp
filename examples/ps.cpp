@@ -27,7 +27,7 @@ void pub() {
   // cout << "Publisher connecting to: " << get_ip_port(addr) << endl;
 
   PublisherUDP p;
-  p.connect();
+  // p.connect();
   p.register_addr(addr);
 
   for (int i = 0; i < MAX_LOOP; ++i) {
@@ -50,7 +50,7 @@ void cb(const message_t &m) {
 // subscriber
 void sub() {
   SubscriberUDP s(sizeof(data_t));
-  s.bind(HOST, PORT);
+  s.bind(PORT);
   // s.settimeout(5000);
   s.register_cb(cb); // you can have many callback functions
   // s.register_cb(cb);
