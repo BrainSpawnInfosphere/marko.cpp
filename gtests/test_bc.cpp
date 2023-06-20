@@ -33,7 +33,8 @@ void server() {
 void client() {
   SocketUDP s;
   s.reuseSocket(true);
-  s.bind(PORT);
+  // s.bind(PORT);
+  s.bind("udp://*:" + to_string(PORT));
 
   size_t sz = sizeof(subscription_t);
 

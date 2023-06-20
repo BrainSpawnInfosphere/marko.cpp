@@ -3,12 +3,18 @@
 #include <sstream>
 #include <vector>
 #include <regex>
+#include <marko/marko.hpp>
 
 using namespace std;
+
+enum SocketType {
+  UDS, UDP, BC, MC, TCP
+};
 
 class SockAddr {
   public:
   void filter(const std::string& addr) {
+
     regex proto("(udp|tcp|unix)\\:\\/\\/([a-z,A-Z,\\d,\\/,.,*,_,-,:]+)");
     smatch m;
     regex_search(addr, m, proto);
@@ -17,20 +23,34 @@ class SockAddr {
       cout << "No matches!!" << endl;
     }
     else if (m[1] == "unix"){
-      cout << "unix path: " << m[2] << endl;
+      udsaddr_t ret{0};
+      string path = m[2];
+      cout << "unix path: " << path << endl;
+      ret = make_sockaddr(path);
     }
     else if (m[1] == "tcp" || m[1] == "udp") {
-      cout << "inet" << endl;
+      sockaddr_in_t ret{0};
       regex ipport("([a-z,A-Z,\\d,\\/,.,*]+):([*,\\d]+)");
       smatch mm;
       string ss = m[2];
       regex_search(ss, mm, ipport);
 
       if (mm.size() != 3) cout << "error " << mm.size() << endl;
-      string ip;
-      if (mm[1] == "*") ip = "ANYADDR_IN";
-      else ip = mm[1];
-      cout << ip << ':' << mm[2] << endl;
+      string ip = mm[1];
+      string sport = mm[2];
+      uint16_t port = stoi(sport);
+
+      if (ip == "*"){
+        ret = make_sockaddr(INADDR_ANY, port);
+      }
+      else if (ip == "bc"){
+        ret = make_sockaddr(INADDR_BROADCAST, port);
+      }
+      else {
+        ret = make_sockaddr(ip, port);
+      }
+
+      cout << get_ip_port(ret) << endl;
     }
   }
 };

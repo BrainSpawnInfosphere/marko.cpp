@@ -10,15 +10,16 @@ class SocketUDP: public Socket {
   SocketUDP() { makeSocket(AF_INET, SOCK_DGRAM, 0); }
   ~SocketUDP() {}
 
-  inline void bind(uint16_t port) {
-    bind(INADDR_ANY, port);
-  }
+  // inline void bind(uint16_t port) {
+  //   bind(INADDR_ANY, port);
+  // }
 
-  void bind(uint32_t inaddr, uint16_t port) {
-    udpaddr_t addr = make_sockaddr(inaddr, port);
-    int err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
-    guard(err, "SocketUDP::bind() failed: ");
-  }
+  // void bind(uint32_t inaddr, uint16_t port) {
+  //   udpaddr_t addr = make_sockaddr(inaddr, port);
+  //   int err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
+  //   guard(err, "SocketUDP::bind() failed: ");
+  // }
+  void connect(const std::string&) = delete;
 
   message_t recvfrom(size_t msg_size, udpaddr_t *from_addr, const int flags=0) {
     message_t dst(msg_size);
