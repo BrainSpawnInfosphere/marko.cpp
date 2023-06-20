@@ -15,15 +15,18 @@ endif()
 
 enable_testing()
 
-add_executable(test_marko
-    test_bc.cpp
-    test_marko.cpp)
-
-target_link_libraries(test_marko PRIVATE
-    marko
-    GTest::gtest_main
+LIST(APPEND gtests
+    test_bc
+    test_ps
+    test_marko
 )
-# target_link_libraries(${MAIN} PRIVATE marko)
+
+foreach(MAIN ${gtests})
+    add_executable(${MAIN} ${MAIN}.cpp)
+    target_link_libraries(${MAIN} PRIVATE
+        marko
+        GTest::gtest_main)
+endforeach()
 
 include(GoogleTest)
-gtest_discover_tests(test_marko)
+# gtest_discover_tests(test_marko)

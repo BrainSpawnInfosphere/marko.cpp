@@ -7,7 +7,7 @@
 
 using namespace std;
 
-string file = "./uds";
+// string file = "./uds";
 string host = "127.0.0.1";
 constexpr int port = 9999;
 constexpr int LOOP = 5;
@@ -26,7 +26,12 @@ void callback(const message_t& m) {
 void sub_thread() {
   // cout << "start sub" << endl;
   SubscriberUDP s(sizeof(data_t));
-  s.bind(port);
+  // s.bind(port);
+  s.bind("udp://*:" + to_string(port));
+
+  // SocketInfo si(s.getSocketFD());
+  // si.info("Bind", SocketInfo::UDP);
+
   s.register_cb( callback );
   for (int i=0; i < LOOP; ++i) {
     s.once();
@@ -43,11 +48,13 @@ void pub_thread() {
     message_t m = pack<data_t>(test_data[i]);
     p.publish(m);
     // cout << "publish " << i << endl;
+    marko::msleep(100);
   }
 }
 
 TEST(marko, pub_sub_udp) {
   thread subth(sub_thread);
+  marko::msleep(500);
   thread pubth(pub_thread);
 
   subth.join();

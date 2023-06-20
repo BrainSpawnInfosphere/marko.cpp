@@ -10,7 +10,7 @@ class SocketUDS: public Socket {
   SocketUDS() {}
   ~SocketUDS() {}
 
-  void bind(const std::string &path, bool multipleBind=false) {}
+  // void bind(const std::string &path, bool multipleBind=false) {}
   message_t recvfrom(size_t msg_size, udsaddr_t *from_addr, const int flags=0) {
     message_t m;
     return std::move(m);

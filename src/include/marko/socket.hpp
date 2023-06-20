@@ -17,89 +17,13 @@
 #include <netinet/in.h> // for address structs
 #include <unistd.h>     // for close()
 // #include <map>
+#include <regex>
 
 extern int errno; // don't like this global value
-
-/**
-
-class Socket {
-  Socket()
-  close()
-  setoptions()
-  getoptions()
-}
-
-class SocketUDP: public Socket {
-  bind()
-  connect()
-  sendto()
-  recvfrom()
-  recv()
-  udpaddr_t
-}
-
-class SocketUDS: public Socket {
-  bind()
-  connect()
-  sendto()
-  recvfrom()
-  recv()
-  geckoUDS_t
-}
-
-class SocketTCP: public Socket {
-  bind()
-  connect()
-  listen()
-  accept()
-  sendto()
-  recvfrom()
-  recv()
-}
-*/
 
 constexpr int SOCKET_ERR = -1;
 constexpr int SOCKET_TIMEOUT = -1;
 constexpr int SOCKET_OK = 0;
-
-// std::map<int,std::string> socketTypes {
-//   {SOCK_DGRAM, "UDP"},
-//   {SOCK_RAW, "RAW"},
-//   {SOCK_STREAM, "STREAM"}
-// };
-
-// enum dataTypes {
-//   Int,
-//   Bool,
-//   Type,
-//   Timeval
-// };
-
-// struct SoOpts {
-//   int val;
-//   std::string description;
-//   dataTypes type;
-// };
-
-// std::vector<SoOpts> socketOptsSOL {
-//   {SO_TYPE, "socket type", dataTypes::Type},
-//   {SO_ACCEPTCONN, "Accepting connections", dataTypes::Bool}, // int
-//   {SO_BROADCAST, "Broadcast messages supported", dataTypes::Bool}, // int
-//   // SO_DEBUG, Debugging information is being recorded,
-//   {SO_DONTROUTE, "Bypass normal routing", dataTypes::Bool},
-//   {SO_ERROR, "Socket error status", dataTypes::Bool}, // int
-//   {SO_KEEPALIVE, "Connections are kept alive with periodic messages", dataTypes::Bool}, // int
-//   // {SO_LINGER, "Socket lingers on close"}, // linger struct
-//   {SO_OOBINLINE, "Out-of-band data is transmitted in line", dataTypes::Bool},
-//   // {SO_RCVTIMEO, "receive timeout"}, // timeval
-//   {SO_REUSEADDR, "SO_REUSEADDR", dataTypes::Bool},
-//   {SO_REUSEPORT, "SO_REUSEPORT", dataTypes::Bool},
-//   {SO_RCVBUF, "Receive buffer size", dataTypes::Int},
-//   {SO_RCVLOWAT, "receive low water mark", dataTypes::Int},
-//   {SO_SNDBUF, "Send buffer size", dataTypes::Int},
-//   {SO_SNDLOWAT, "send low water mark", dataTypes::Int},
-//   // {SO_SNDTIMEO, "send timeout"}, // timeval
-// };
 
 
 class Socket {
@@ -196,6 +120,9 @@ public:
     }
   }
 
+  void bind(const std::string& address) { filter(address, BIND); }
+  void connect(const std::string& address) { filter(address, CONNECT); }
+
 protected:
   void makeSocket(int family, int type, int proto) {
     socket_fd = ::socket(family, type, proto);
@@ -207,6 +134,66 @@ protected:
       std::cout << msg + std::string(strerror(int(errno))) << std::endl;
       throw std::runtime_error(msg + std::string(strerror(int(errno))));
     }
+  }
+
+  enum ConType: uint8_t {
+    CONNECT,
+    BIND
+  };
+
+  void filter(const std::string& address, const ConType type) {
+    std::regex proto("(udp|tcp|unix)\\:\\/\\/([a-z,A-Z,\\d,\\/,.,*,_,-,:]+)");
+    std::smatch m;
+    regex_search(address, m, proto);
+
+    if (m.size() == 0) {
+      guard(-1, "Socket UDS address invalide: " + address);
+    }
+    else if (m[1] == "unix"){
+      std::string path = m[2];
+      // std::cout << "unix path: " << path << std::endl;
+      udsaddr_t addr = make_sockaddr(path);
+
+      int err = 0;
+      if (type == CONNECT) err = ::connect(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
+      else if (type == BIND) err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
+      else err = -1;
+
+      guard(err, "Socket UDS couldn't connect/bind: ");
+    }
+    else if (m[1] == "tcp" || m[1] == "udp") {
+      std::regex ipport("([a-z,A-Z,\\d,\\/,.,*]+):([*,\\d]+)");
+      std::smatch mm;
+      std::string ss = m[2];
+      regex_search(ss, mm, ipport);
+
+      if (mm.size() != 3) guard(-1, "Socket UDP address invalide: " + address);
+
+      std::string ip = mm[1];
+      uint16_t port;
+      if (mm[2] == "*") port = 0;
+      else port = stoi(mm[2]);
+
+      sockaddr_in_t addr{0};
+
+      if (ip == "*"){
+        addr = make_sockaddr(INADDR_ANY, port);
+      }
+      else if (ip == "bc"){
+        addr = make_sockaddr(INADDR_BROADCAST, port);
+      }
+      else {
+        addr = make_sockaddr(ip, port);
+      }
+
+      // std::cout << get_ip_port(addr) << std::endl;
+      int err = 0;
+      if (type == CONNECT) err = ::connect(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
+      else if (type == BIND) err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
+      else err = -1;
+      guard(err, "Socket::bind() failed: ");
+    }
+
   }
 };
 

@@ -58,7 +58,8 @@ message_t cb(const message_t &m) {
 void reply() {
   cout << "Reply binding to: " << HOST << ":" << PORT << endl;
   ReplyUDP r(sizeof(request_t));
-  r.bind(PORT);
+  r.bind("udp://*:" + to_string(PORT));
+  // r.bind(PORT);
   // r.settimeout(1000);
 
   SocketInfo si(r.getSocketFD());
