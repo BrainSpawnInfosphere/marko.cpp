@@ -153,6 +153,7 @@ protected:
       std::string path = m[2];
       // std::cout << "unix path: " << path << std::endl;
       udsaddr_t addr = make_sockaddr(path);
+
       int err = 0;
       if (type == CONNECT) err = ::connect(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
       else if (type == BIND) err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
@@ -167,12 +168,12 @@ protected:
       regex_search(ss, mm, ipport);
 
       if (mm.size() != 3) guard(-1, "Socket UDP address invalide: " + address);
+
       std::string ip = mm[1];
       uint16_t port;
       if (mm[2] == "*") port = 0;
-      else {
-        port = stoi(mm[2]);
-      }
+      else port = stoi(mm[2]);
+
       sockaddr_in_t addr{0};
 
       if (ip == "*"){

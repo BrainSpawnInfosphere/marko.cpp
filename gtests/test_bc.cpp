@@ -21,19 +21,16 @@ subscription_t bc_test_data[LOOP]{
 void server() {
   SocketBC s(PORT);
 
-  // SocketInfo si(s.getSocketFD());
-  // si.info("server", SocketInfo::UDP);
-
   for (int i=0; i<LOOP; ++i) {
     message_t sub = pack<subscription_t>(bc_test_data[i]);
     s.cast(sub);
+    marko::msleep(100);
   }
 }
 
 void client() {
   SocketUDP s;
   s.reuseSocket(true);
-  // s.bind(PORT);
   s.bind("udp://*:" + to_string(PORT));
 
   size_t sz = sizeof(subscription_t);
@@ -41,7 +38,7 @@ void client() {
   for (int i=0; i<LOOP; ++i) {
     message_t m = s.recv(sz);
     subscription_t msg = unpack<subscription_t>(m);
-    // cout << int(msg.topic) << " " << int(msg.status) << endl;
+    // cerr << int(msg.topic) << " " << int(msg.status) << endl;
     EXPECT_EQ(msg.topic, bc_test_data[i].topic);
     EXPECT_EQ(msg.status, bc_test_data[i].status);
   }
