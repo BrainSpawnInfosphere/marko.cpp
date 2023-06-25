@@ -52,10 +52,11 @@ request_t rr = unpack<request_t>(msg);
     - protocol: `udp`
     - ip_address: `1.2.3.4` or `*` or `bc`(broadcast)
     - port: 1-65535 or `*`(any available port)
-- `AF_UNIX`: `unix://path`
+- `AF_UNIX`: `unix://file_path`
 
 ```c++
-"udp://1.2.3.4:6000"
+std::string udp = "udp://1.2.3.4:6000";
+std::string unix = "unix://./file/path.server.udp";
 ```
 
 ## Alternate
@@ -65,7 +66,13 @@ request_t rr = unpack<request_t>(msg);
 
 ## Todo
 
-- [ ] Include Unix Domain Sockets in pub/sub/reply/request
+- [x] Include Unix Datagram Protocol with `SOCK_DGRAM` in pub/sub/reply/request
+- [ ] Include Transmition Control Protocol with `SOCK_STREAM` in pub/sub/reply/request
+- [ ] Include Unix Domain Sockets with `SOCK_STREAM` in pub/sub/reply/request
+- [x] Include Unix Domain Sockets with `SOCK_DGRAM` in pub/sub/reply/request
+- [ ] For classes that take `msg_size` for `recv()` or `recvfrom()`, set
+      low water mark to that size so the functions will wait for that
+      amount of data before signalling ready to read
 
 # MIT License
 
