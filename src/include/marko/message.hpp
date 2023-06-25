@@ -51,8 +51,5 @@ std::string msg2string(const message_t& msg) {
 
 static
 std::ostream &operator<<(std::ostream &os, message_t const &msg) {
-  // os << "[";
-  // for (const uint8_t& m: msg) os << int(m) << ",";
-  // return os << "]";
   return os << msg2string(msg);
 }

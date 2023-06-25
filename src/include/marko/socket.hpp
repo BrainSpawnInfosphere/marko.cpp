@@ -51,28 +51,27 @@ public:
     guard(err, "settimeout(): ");
   }
 
-  void setnonblocking() {
+  void setnonblocking(bool val) {
     // int flags = guard(fcntl(socket_fd, F_GETFL), "setblocking(): ");
     // guard(fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK), "setblocking(): ");
 
-    int on = 1;
+    int on = val ? 1 : 0; // FIONBIO - enable nonblocking
     guard(ioctl(socket_fd, FIONBIO, (char *)&on), "setnonblocking(): ");
   }
 
+  // level: IPPROTO_TCP, IPPROTO_UDP, IPPROTO_IP, SOL_SOCKET
   void setsockopt(int level, int name, int val) {
-    /*
-    level: IPPROTO_TCP, IPPROTO_UDP, IPPROTO_IP, SOL_SOCKET
-    */
     int err = ::setsockopt(socket_fd, level, name, (char *)&val, sizeof(val));
     guard(err, "setsockopt(): ");
   }
 
+  // FIXME: move to UDP
   std::string getsockname() {
-    udpaddr_t addr = {0};
+    inetaddr_t addr = {0};
     socklen_t addr_len = sizeof(addr);
-    int err = ::getsockname(socket_fd, (struct sockaddr*)&addr, &addr_len);
+    int err = ::getsockname(socket_fd, (sockaddr_t*)&addr, &addr_len);
     guard(err, "getsockname(): ");
-    return get_ip_port(addr);
+    return inet2string(addr);
   }
 
   // bool available(long msec=1){
@@ -120,8 +119,8 @@ public:
     }
   }
 
-  void bind(const std::string& address) { filter(address, BIND); }
-  void connect(const std::string& address) { filter(address, CONNECT); }
+  void bind(const std::string& address) { setSocket(address, BIND); }
+  void connect(const std::string& address) { setSocket(address, CONNECT); }
 
 protected:
   void makeSocket(int family, int type, int proto) {
@@ -131,6 +130,7 @@ protected:
 
   inline void guard(int err, const std::string &msg) {
     if (err < 0) {
+      this->close();
       std::cout << msg + std::string(strerror(int(errno))) << std::endl;
       throw std::runtime_error(msg + std::string(strerror(int(errno))));
     }
@@ -141,7 +141,7 @@ protected:
     BIND
   };
 
-  void filter(const std::string& address, const ConType type) {
+  void setSocket(const std::string& address, const ConType type) {
     std::regex proto("(udp|tcp|unix)\\:\\/\\/([a-z,A-Z,\\d,\\/,.,*,_,-,:]+)");
     std::smatch m;
     regex_search(address, m, proto);
@@ -150,52 +150,42 @@ protected:
       guard(-1, "Socket UDS address invalide: " + address);
     }
     else if (m[1] == "unix"){
-      std::string path = m[2];
-      // std::cout << "unix path: " << path << std::endl;
-      udsaddr_t addr = make_sockaddr(path);
+      unixaddr_t addr = unix_sockaddr(address);
 
+      std::string path(m[2]);
+      unlink(path.c_str());
       int err = 0;
-      if (type == CONNECT) err = ::connect(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
-      else if (type == BIND) err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
-      else err = -1;
-
-      guard(err, "Socket UDS couldn't connect/bind: ");
+      if (type == CONNECT) {
+        err = ::connect(socket_fd, (const sockaddr_t*)&addr, sizeof(addr));
+        guard(err, "Socket UDS couldn't connect: ");
+      }
+      else if (type == BIND) {
+        err = ::bind(socket_fd, (const sockaddr_t*)&addr, sizeof(addr));
+        guard(err, "Socket UDS couldn't bind: ");
+      }
+      else guard(-1, "Socket UDS neither connect or bind");
     }
     else if (m[1] == "tcp" || m[1] == "udp") {
-      std::regex ipport("([a-z,A-Z,\\d,\\/,.,*]+):([*,\\d]+)");
-      std::smatch mm;
-      std::string ss = m[2];
-      regex_search(ss, mm, ipport);
+      sockaddr_in_t addr = inet_sockaddr(address);
 
-      if (mm.size() != 3) guard(-1, "Socket UDP address invalide: " + address);
-
-      std::string ip = mm[1];
-      uint16_t port;
-      if (mm[2] == "*") port = 0;
-      else port = stoi(mm[2]);
-
-      sockaddr_in_t addr{0};
-
-      if (ip == "*"){
-        addr = make_sockaddr(INADDR_ANY, port);
-      }
-      else if (ip == "bc"){
-        addr = make_sockaddr(INADDR_BROADCAST, port);
-      }
-      else {
-        addr = make_sockaddr(ip, port);
-      }
-
-      // std::cout << get_ip_port(addr) << std::endl;
       int err = 0;
-      if (type == CONNECT) err = ::connect(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
-      else if (type == BIND) err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
+      if (type == CONNECT) err = ::connect(socket_fd, (const sockaddr_t *)&addr, sizeof(addr));
+      else if (type == BIND) err = ::bind(socket_fd, (const sockaddr_t *)&addr, sizeof(addr));
       else err = -1;
       guard(err, "Socket::bind() failed: ");
     }
-
   }
 };
+
+
+
+
+
+
+
+
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -218,7 +208,7 @@ protected:
 //       setsockopt(SOL_SOCKET, SO_REUSEADDR, 0);
 //     }
 
-//     udpaddr_t addr;
+//     inetaddr_t addr;
 //     memset(&addr, 0, sizeof(addr));
 //     addr.sin_family      = AF_INET;
 //     addr.sin_addr.s_addr = INADDR_ANY; // all interfaces
@@ -235,7 +225,7 @@ protected:
 //     // info("Connect");
 //   }
 
-//   message_t recvfrom(size_t msg_size, udpaddr_t *from_addr, const int flags=0) {
+//   message_t recvfrom(size_t msg_size, inetaddr_t *from_addr, const int flags=0) {
 //     message_t dst(msg_size);
 //     int num = 0;
 
@@ -263,7 +253,7 @@ protected:
 //     return std::move(m);
 //   }
 
-//   int sendto(const message_t& msg, const udpaddr_t &addr, int flags=0) {
+//   int sendto(const message_t& msg, const inetaddr_t &addr, int flags=0) {
 //     int num = ::sendto(
 //       socket_fd,
 //       msg.data(),
@@ -276,16 +266,16 @@ protected:
 //     return num;
 //   }
 
-//   // static udpaddr_t getsockaddr(const int port) {
-//   //   udpaddr_t addr = {0};
+//   // static inetaddr_t getsockaddr(const int port) {
+//   //   inetaddr_t addr = {0};
 //   //   addr.sin_family      = AF_INET;
 //   //   addr.sin_addr.s_addr = INADDR_ANY;
 //   //   addr.sin_port        = htons(port);
 //   //   return std::move(addr);
 //   // }
 
-//   // static udpaddr_t getsockaddr(const std::string& ip, int port) {
-//   //   udpaddr_t addr = {0};
+//   // static inetaddr_t getsockaddr(const std::string& ip, int port) {
+//   //   inetaddr_t addr = {0};
 //   //   addr.sin_family      = AF_INET;
 //   //   addr.sin_addr.s_addr = inet_addr(ip.c_str());
 //   //   addr.sin_port        = htons(port);

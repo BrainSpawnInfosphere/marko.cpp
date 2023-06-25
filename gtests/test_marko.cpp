@@ -12,8 +12,19 @@ struct data_t { int a; };
 
 TEST(marko, addresses) {
   int port = 9999;
-  string host = get_host_ip();
-  udpaddr_t addr = make_sockaddr(host, port);
+  string host = "1.2.3.4";
+  string address = "udp://"+host+":"+to_string(port);
+  inetaddr_t addr = inet_sockaddr(address);
+  EXPECT_EQ(addr.sin_addr.s_addr, inet_addr(host.c_str()));
+  EXPECT_EQ(addr.sin_port, htons(port));
+
+  port = 99;
+  host = "bc";
+  address = "udp://"+host+":"+to_string(port);
+  addr = inet_sockaddr(address);
+  // cerr << address << " " << host << endl;
+  EXPECT_EQ(addr.sin_addr.s_addr, inet_addr("255.255.255.255"));
+  EXPECT_EQ(addr.sin_port, htons(port));
 }
 
 TEST(marko, ascii) {

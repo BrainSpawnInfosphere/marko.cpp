@@ -46,6 +46,17 @@ sizeof(msg); // 12B
 request_t rr = unpack<request_t>(msg);
 ```
 
+## Addresses
+
+- `AF_INET`: `protocol://ip_address:port`
+    - protocol: `udp`
+    - ip_address: `1.2.3.4` or `*` or `bc`(broadcast)
+    - port: 1-65535 or `*`(any available port)
+- `AF_UNIX`: `unix://path`
+
+```c++
+"udp://1.2.3.4:6000"
+```
 
 ## Alternate
 

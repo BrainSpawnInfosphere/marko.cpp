@@ -18,6 +18,7 @@ enable_testing()
 LIST(APPEND gtests
     test_bc
     test_ps
+    test_rr
     test_marko
 )
 

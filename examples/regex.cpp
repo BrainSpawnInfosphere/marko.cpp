@@ -11,7 +11,7 @@ enum SocketType {
   UDS, UDP, BC, MC, TCP
 };
 
-class SockAddr {
+class SockAddress {
   public:
   void filter(const std::string& addr) {
 
@@ -23,10 +23,10 @@ class SockAddr {
       cout << "No matches!!" << endl;
     }
     else if (m[1] == "unix"){
-      udsaddr_t ret{0};
+      unixaddr_t ret{0};
       string path = m[2];
       cout << "unix path: " << path << endl;
-      ret = make_sockaddr(path);
+      // ret = make_sockaddr(path);
     }
     else if (m[1] == "tcp" || m[1] == "udp") {
       sockaddr_in_t ret{0};
@@ -40,17 +40,17 @@ class SockAddr {
       string sport = mm[2];
       uint16_t port = stoi(sport);
 
-      if (ip == "*"){
-        ret = make_sockaddr(INADDR_ANY, port);
-      }
-      else if (ip == "bc"){
-        ret = make_sockaddr(INADDR_BROADCAST, port);
-      }
-      else {
-        ret = make_sockaddr(ip, port);
-      }
+      // if (ip == "*"){
+      //   ret = make_sockaddr(INADDR_ANY, port);
+      // }
+      // else if (ip == "bc"){
+      //   ret = make_sockaddr(INADDR_BROADCAST, port);
+      // }
+      // else {
+      //   ret = make_sockaddr(ip, port);
+      // }
 
-      cout << get_ip_port(ret) << endl;
+      // cout << get_ip_port(ret) << endl;
     }
   }
 };
@@ -59,7 +59,7 @@ int main()
 {
     string s{"udp://*:3000"};
 
-    SockAddr sa;
+    SockAddress sa;
     sa.filter(s);
     sa.filter("tcp://1.2.3.4:5000");
     sa.filter("unix:///bob/here");

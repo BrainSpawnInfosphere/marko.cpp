@@ -8,61 +8,36 @@
 #include <sys/socket.h>
 #include "sockaddr.hpp"
 
-// std::map<int,std::string> socketTypes {
-//   {SOCK_DGRAM, "UDP"},
-//   {SOCK_RAW, "RAW"},
-//   {SOCK_STREAM, "STREAM"}
-// };
 
-// enum dataTypes {
-//   Int,
-//   Bool,
-//   Type,
-//   Timeval
-// };
-
-// struct SoOpts {
-//   int val;
-//   std::string description;
-//   dataTypes type;
-// };
-
-// std::vector<SoOpts> socketOptsSOL {
-//   {SO_TYPE, "socket type", dataTypes::Type},
-//   {SO_ACCEPTCONN, "Accepting connections", dataTypes::Bool}, // int
-//   {SO_BROADCAST, "Broadcast messages supported", dataTypes::Bool}, // int
-//   // SO_DEBUG, Debugging information is being recorded,
-//   {SO_DONTROUTE, "Bypass normal routing", dataTypes::Bool},
-//   {SO_ERROR, "Socket error status", dataTypes::Bool}, // int
-//   {SO_KEEPALIVE, "Connections are kept alive with periodic messages", dataTypes::Bool}, // int
-//   // {SO_LINGER, "Socket lingers on close"}, // linger struct
-//   {SO_OOBINLINE, "Out-of-band data is transmitted in line", dataTypes::Bool},
-//   // {SO_RCVTIMEO, "receive timeout"}, // timeval
-//   {SO_REUSEADDR, "SO_REUSEADDR", dataTypes::Bool},
-//   {SO_REUSEPORT, "SO_REUSEPORT", dataTypes::Bool},
-//   {SO_RCVBUF, "Receive buffer size", dataTypes::Int},
-//   {SO_RCVLOWAT, "receive low water mark", dataTypes::Int},
-//   {SO_SNDBUF, "Send buffer size", dataTypes::Int},
-//   {SO_SNDLOWAT, "send low water mark", dataTypes::Int},
-//   // {SO_SNDTIMEO, "send timeout"}, // timeval
-// };
 
 class SocketInfo {
   public:
   SocketInfo(int fd): socket_fd(fd) {}
 
+  // remove?
   enum SocketTypes {
     UDP, UDS, TCP
   };
 
+  // SO_PROTOCOL: AF_INET, AF_UNIX ... doesn't work on macOS
+  // SO_TYPE: SOCK_DGRAM, SOCK_STREAM
   void info(const std::string& s, SocketTypes st) {
     printf("[%s Socket] =====================================\n", s.c_str());
     printf("  bind/connect to: %s\n", getsockname().c_str());
     printf("  file descriptor: %d\n", socket_fd);
 
-    if (st == UDP || st == TCP) info_so();
-    if (st == UDP) info_ip();
-    // if (st == UDS); // nothing yet
+    int type;
+    // int proto;
+    socklen_t length = sizeof(type);
+
+    ::getsockopt(socket_fd, SOL_SOCKET, SO_TYPE, &type, &length );
+    // ::getsockopt(socket_fd, SO_PROTOCOL, SO_TYPE, &proto, &length );
+
+
+    if (type == SOCK_DGRAM || type == SOCK_STREAM) info_so();
+    if (type == SOCK_DGRAM) info_ip();
+    // if (type == SOCK_DGRAM); // nothing yet
+    // if (proto == AF_UNIX) printf("");
   }
 
   private:
@@ -116,50 +91,50 @@ class SocketInfo {
   }
 
   std::string getsockname() {
-    udpaddr_t addr = {0};
+    inetaddr_t addr = {0};
     socklen_t addr_len = sizeof(addr);
     int err = ::getsockname(socket_fd, (struct sockaddr*)&addr, &addr_len);
     // guard(err, "getsockname(): ");
     if (err < 0) return std::string();
-    return get_ip_port(addr);
+    return inet2string(addr);
   }
 
   std::map<int,std::string> socketTypes {
-  {SOCK_DGRAM, "UDP"},
-  {SOCK_RAW, "RAW"},
-  {SOCK_STREAM, "STREAM"}
-};
+    {SOCK_DGRAM, "DGRAM"},
+    {SOCK_RAW, "RAW"},
+    {SOCK_STREAM, "STREAM"}
+  };
 
-enum dataTypes {
-  Int,
-  Bool,
-  Type,
-  Timeval
-};
+  enum dataTypes {
+    Int,
+    Bool,
+    Type,
+    Timeval
+  };
 
-struct SoOpts {
-  int val;
-  std::string description;
-  dataTypes type;
-};
+  struct SoOpts {
+    int val;
+    std::string description;
+    dataTypes type;
+  };
 
-std::vector<SoOpts> socketOptsSOL {
-  {SO_TYPE, "socket type", dataTypes::Type},
-  {SO_ACCEPTCONN, "Accepting connections", dataTypes::Bool}, // int
-  {SO_BROADCAST, "Broadcast messages supported", dataTypes::Bool}, // int
-  // SO_DEBUG, Debugging information is being recorded,
-  {SO_DONTROUTE, "Bypass normal routing", dataTypes::Bool},
-  {SO_ERROR, "Socket error status", dataTypes::Bool}, // int
-  {SO_KEEPALIVE, "Connections are kept alive with periodic messages", dataTypes::Bool}, // int
-  // {SO_LINGER, "Socket lingers on close"}, // linger struct
-  {SO_OOBINLINE, "Out-of-band data is transmitted in line", dataTypes::Bool},
-  // {SO_RCVTIMEO, "receive timeout"}, // timeval
-  {SO_REUSEADDR, "SO_REUSEADDR", dataTypes::Bool},
-  {SO_REUSEPORT, "SO_REUSEPORT", dataTypes::Bool},
-  {SO_RCVBUF, "Receive buffer size", dataTypes::Int},
-  {SO_RCVLOWAT, "receive low water mark", dataTypes::Int},
-  {SO_SNDBUF, "Send buffer size", dataTypes::Int},
-  {SO_SNDLOWAT, "send low water mark", dataTypes::Int},
-  // {SO_SNDTIMEO, "send timeout"}, // timeval
-};
+  std::vector<SoOpts> socketOptsSOL {
+    {SO_TYPE, "socket type", dataTypes::Type},
+    {SO_ACCEPTCONN, "Accepting connections", dataTypes::Bool}, // int
+    {SO_BROADCAST, "Broadcast messages supported", dataTypes::Bool}, // int
+    // SO_DEBUG, Debugging information is being recorded,
+    {SO_DONTROUTE, "Bypass normal routing", dataTypes::Bool},
+    {SO_ERROR, "Socket error status", dataTypes::Bool}, // int
+    // {SO_KEEPALIVE, "Connections are kept alive with periodic messages", dataTypes::Bool}, // int
+    // {SO_LINGER, "Socket lingers on close", dataTypes::Bool}, // linger struct
+    {SO_OOBINLINE, "Out-of-band data is transmitted in line", dataTypes::Bool},
+    // {SO_RCVTIMEO, "receive timeout"}, // timeval
+    {SO_REUSEADDR, "SO_REUSEADDR", dataTypes::Bool},
+    {SO_REUSEPORT, "SO_REUSEPORT", dataTypes::Bool},
+    {SO_RCVBUF, "Receive buffer size", dataTypes::Int},
+    {SO_RCVLOWAT, "receive low water mark", dataTypes::Int},
+    {SO_SNDBUF, "Send buffer size", dataTypes::Int},
+    {SO_SNDLOWAT, "send low water mark", dataTypes::Int},
+    // {SO_SNDTIMEO, "send timeout"}, // timeval
+  };
 };

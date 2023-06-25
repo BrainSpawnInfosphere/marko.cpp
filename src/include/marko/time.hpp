@@ -38,4 +38,4 @@ timeval_t get_time(const long timeout_msec) {
   tv.tv_sec  = long(timeout_msec / 1000);
   tv.tv_usec = (timeout_msec - tv.tv_sec*1000) % 1000;
   return std::move(tv);
-}
+} // end marko

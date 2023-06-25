@@ -23,8 +23,8 @@ struct __attribute__((packed)) response_t {
 
 // requester
 void request() {
-  udpaddr_t addr = make_sockaddr(HOST, PORT);
-  cout << "Request connecting to: " << get_ip_port(addr) << endl;
+  inetaddr_t addr = inet_sockaddr("udp://" + HOST + ":" + to_string(PORT));
+  cout << "Request connecting to: " << inet2string(addr) << endl;
 
   RequestUDP r(sizeof(response_t));
   // r.connect();

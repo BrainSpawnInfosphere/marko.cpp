@@ -15,7 +15,7 @@ class Event {
 public:
   Event() {}
   Event(const Event &e) = delete; // don't allow this
-  // ~Event() = delete;
+  ~Event() = delete;
   inline void set() noexcept { flag.test_and_set(); }
   inline void clear() noexcept { flag.clear(); }
   inline bool is_set() const { return flag.test(); }

@@ -7,27 +7,26 @@
 
 using namespace std;
 
-// string file = "./uds";
-string host = "127.0.0.1";
-constexpr int port = 9999;
+constexpr int port = 8888;
 constexpr int LOOP = 5;
+string udpbind = "udp://*:" + to_string(port);
+string udpaddr = "udp://127.0.0.1:"+to_string(port);
+string unix = "unix://./unix.ps.uds";
 
 struct data_t { int a; };
 
-data_t test_data[LOOP]{{1},{2},{3},{4},{5}};
+// data_t test_data[LOOP]{{1},{2},{3},{4},{5}};
+vector<data_t> test_data;
 
 void callback(const message_t& m) {
   static int i = 0;
   data_t d = unpack<data_t>(m);
   EXPECT_EQ(d.a, test_data[i++].a);
-  // cout << i << endl;
 }
 
 void sub_thread() {
-  // cout << "start sub" << endl;
   SubscriberUDP s(sizeof(data_t));
-  // s.bind(port);
-  s.bind("udp://*:" + to_string(port));
+  s.bind(udpbind);
 
   // SocketInfo si(s.getSocketFD());
   // si.info("Bind", SocketInfo::UDP);
@@ -39,23 +38,54 @@ void sub_thread() {
 }
 
 void pub_thread() {
-  udpaddr_t addr = make_sockaddr(host,port);
-  // cout << "start pub" << endl;
+  inetaddr_t addr = inet_sockaddr(udpaddr);
   PublisherUDP p;
   p.register_addr(addr);
-  // p.connect(host, port);
   for (int i=0; i < LOOP; ++i) {
     message_t m = pack<data_t>(test_data[i]);
     p.publish(m);
-    // cout << "publish " << i << endl;
-    marko::msleep(100);
+    marko::msleep(1);
   }
 }
 
 TEST(marko, pub_sub_udp) {
+  for (int i=0; i<LOOP; ++i) test_data.push_back({i});
   thread subth(sub_thread);
-  marko::msleep(500);
+  marko::msleep(1);
   thread pubth(pub_thread);
+
+  subth.join();
+  pubth.join();
+}
+
+/////////////////////////////////////////
+
+void sub_thread_un() {
+  SubscriberUnix s(sizeof(data_t));
+  s.bind(unix);
+
+  s.register_cb( callback );
+  for (int i=0; i < LOOP; ++i) {
+    s.once();
+  }
+}
+
+void pub_thread_un() {
+  unixaddr_t addr = unix_sockaddr(unix);
+  PublisherUnix p;
+  p.register_addr(addr);
+  for (int i=0; i < LOOP; ++i) {
+    message_t m = pack<data_t>(test_data[i]);
+    p.publish(m);
+    marko::msleep(1);
+  }
+}
+
+TEST(marko, pub_sub_unix) {
+  for (int i=0; i<LOOP; ++i) test_data.push_back({i});
+  thread subth(sub_thread_un);
+  marko::msleep(1);
+  thread pubth(pub_thread_un);
 
   subth.join();
   pubth.join();

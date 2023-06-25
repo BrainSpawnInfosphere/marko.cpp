@@ -43,14 +43,10 @@ protected:
 };
 
 using SubscriberUDP = Subscriber<SocketUDP>;
-// typedef Subscriber SubscriberUDP;
-// template <typename T> using SubscriberUDP = Subscriber<T>;
-// template <typename T> using SubscriberUDP = Subscriber<T>;
-// template <typename T> using SubscriberUDS = Subscriber<T, UDSSocket>;
+using SubscriberUnix = Subscriber<SocketUnix>;
 
 ///////////////////////////////////////////////////////////////////////////
 
-// template <typename SOCKADDR> class Publisher : public Socket<SOCKADDR>
 template <typename SOCKET, typename SOCKADDR>
 class Publisher : public SOCKET {
 public:
@@ -67,7 +63,5 @@ protected:
   std::vector<SOCKADDR> clientaddrs;
 };
 
-// typedef Publisher PublisherUDP;
-using PublisherUDP = Publisher<SocketUDP, udpaddr_t>;
-// template <typename T> using PublisherUDP = Publisher<T, udpaddr_t>;
-// template <typename T> using PublisherUDS = Publisher<T, UDSSocket>;
+using PublisherUDP = Publisher<SocketUDP, inetaddr_t>;
+using PublisherUnix = Publisher<SocketUnix, unixaddr_t>;

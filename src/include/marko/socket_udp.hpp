@@ -15,13 +15,13 @@ class SocketUDP: public Socket {
   // }
 
   // void bind(uint32_t inaddr, uint16_t port) {
-  //   udpaddr_t addr = make_sockaddr(inaddr, port);
+  //   inetaddr_t addr = make_sockaddr(inaddr, port);
   //   int err = ::bind(socket_fd, (const struct sockaddr *)&addr, sizeof(addr));
   //   guard(err, "SocketUDP::bind() failed: ");
   // }
   void connect(const std::string&) = delete;
 
-  message_t recvfrom(size_t msg_size, udpaddr_t *from_addr, const int flags=0) {
+  message_t recvfrom(size_t msg_size, inetaddr_t *from_addr, const int flags=0) {
     message_t dst(msg_size);
     int num = 0;
 
@@ -31,7 +31,7 @@ class SocketUDP: public Socket {
       num = ::recvfrom(socket_fd,
         dst.data(), msg_size,
         flags,
-        (struct sockaddr *)from_addr, &from_len);
+        (sockaddr_t*)from_addr, &from_len);
     }
     else
       num = ::recvfrom(socket_fd, dst.data(), msg_size, flags, NULL, NULL);
@@ -50,7 +50,7 @@ class SocketUDP: public Socket {
     return std::move(m);
   }
 
-  int sendto(const message_t& msg, const udpaddr_t &addr, int flags=0) {
+  int sendto(const message_t& msg, const inetaddr_t &addr, int flags=0) {
     // std::cout << "sendto" << std::endl;
     int num = ::sendto(
       socket_fd,

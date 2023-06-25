@@ -9,6 +9,7 @@ using namespace std;
 
 string HOST = get_host_ip();
 constexpr int PORT    = 3000;
+// string address = "udp://" + HOST + ":" + to_string(PORT);
 constexpr int MAX_LOOP = 10;
 
 // publish data
@@ -23,7 +24,7 @@ struct data_t {
 
 // publisher
 void pub() {
-  udpaddr_t addr = make_sockaddr(HOST,PORT);
+  inetaddr_t addr = inet_sockaddr("udp://" + HOST + ":" + to_string(PORT));
   // cout << "Publisher connecting to: " << get_ip_port(addr) << endl;
 
   PublisherUDP p;

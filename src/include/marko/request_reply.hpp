@@ -8,7 +8,7 @@
 // ////////////////////////////////////////////////////////
 #pragma once
 
-// // #include "base.hpp"
+
 #include "event.hpp"  // Event
 #include "socket_types.hpp"
 #include "sockaddr.hpp"
@@ -34,16 +34,17 @@ public:
     SOCKADDR from_addr = {0};
     message_t m = SOCKET::recvfrom(msg_size, &from_addr);
 
-    if (m.size() == 0) return;
-    if (m.size() != msg_size) return;
+    // std::cerr << "from_addr: " << from_addr << std::endl;
+    // std::cerr << "m.size(): " << m.size() << " " << msg_size << std::endl;
 
-    // print_msg(m);
-    // std::cout << "from recvfrom: " << m << std::endl;
+    if (m.size() == 0 || m.size() != msg_size) return;
 
     message_t r = callback(m);
 
-    // std::cout << "Reply::once: " << get_ip_port(from_addr) << std::endl;
+    // std::cerr << "r.size(): " << r.size() << std::endl;
+
     SOCKET::sendto(r, from_addr);
+    // std::cerr << "once done" << std::endl;
   }
 
 protected:
@@ -51,7 +52,8 @@ protected:
   const size_t msg_size;
 };
 
-using ReplyUDP = Reply<SocketUDP, udpaddr_t>;
+using ReplyUDP = Reply<SocketUDP, inetaddr_t>;
+using ReplyUnix = Reply<SocketUnix, unixaddr_t>;
 
 // /////////////////////////////////////////////////////////////////
 
@@ -61,14 +63,14 @@ public:
   Request(size_t size): msg_size(size) {}
   ~Request() {}
 
-  const message_t request(const message_t &msg, const SOCKADDR &addr) {
-    // std::cout << "request" << std::endl;
+  message_t request(const message_t &msg, const SOCKADDR &addr) {
     SOCKET::sendto(msg, addr);
-    // std::cout << "Request::sendto:  " << get_ip_port(addr)  << std::endl;
 
-    SOCKADDR from_addr = {0};
-    message_t rep = SOCKET::recvfrom(msg_size, &from_addr);
-    // std::cout << "Request::recvfrom:  " << get_ip_port(from_addr)  << std::endl;
+    // std::cerr << "waiting for reply" << std::endl;
+
+    // SOCKADDR from_addr = {0};
+    // message_t rep = SOCKET::recvfrom(msg_size, &from_addr);
+    message_t rep = SOCKET::recv(msg_size);
     return std::move(rep);
   }
 
@@ -76,8 +78,5 @@ protected:
   const size_t msg_size;
 };
 
-// template <typename REQ, typename REPLY>
-// using RequestUDP = Request<REQ, REPLY, SocketUDP, udpaddr_t>;
-// template <typename REQ, typename REPLY>
-// using RequestUDS = Request<UDSSocket>;
-using RequestUDP = Request<SocketUDP, udpaddr_t>;
+using RequestUDP = Request<SocketUDP, inetaddr_t>;
+using RequestUnix = Request<SocketUnix, unixaddr_t>;
