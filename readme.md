@@ -73,6 +73,9 @@ std::string unix = "unix://./file/path.server.udp";
 - [ ] For classes that take `msg_size` for `recv()` or `recvfrom()`, set
       low water mark to that size so the functions will wait for that
       amount of data before signalling ready to read
+- [ ] Enable low watermark (`SO_RCVLOWAT`) for receiving data based on `msg_size`, this
+      will force socket to wait for a full message without having to call a receive
+      function again
 
 # MIT License
 
